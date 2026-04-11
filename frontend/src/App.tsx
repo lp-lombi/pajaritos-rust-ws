@@ -8,6 +8,14 @@ import "./App.css";
 import Header from "./sections/Header";
 import StatusBar from "./layout/StatusBar";
 
+type UpdatePlayerPayload = {
+    tag?: string;
+    subscription?: {
+        validFrom: string;
+        validUntil: string;
+    } | null;
+};
+
 const AUTH_USER_STORAGE_KEY = "auth_user";
 
 function getStoredUser(): LoggedUser | null {
@@ -213,9 +221,44 @@ function App() {
             }
 
             setPlayers((prev) =>
-                prev.map((player) => (player.id === playerId ? { ...player, tag: data.tag } : player))
+                prev.map((player) => (player.id === playerId ? { ...player, ...data } : player))
             );
             setInfo("Tag actualizado correctamente");
+        } catch {
+            setError("No se pudo conectar con el backend");
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    async function handleUpdatePlayerDetails(playerId: number, payload: UpdatePlayerPayload) {
+        if (!payload.tag && payload.subscription === undefined) {
+            setError("No hay cambios para guardar");
+            return;
+        }
+
+        setLoading(true);
+        setError("");
+        setInfo("");
+
+        try {
+            const response = await fetch(`/api/players/${playerId}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                setError(data.error ?? "No se pudo actualizar el player");
+                return;
+            }
+
+            setPlayers((prev) =>
+                prev.map((player) => (player.id === playerId ? { ...player, ...data } : player))
+            );
+            setInfo("Player actualizado correctamente");
         } catch {
             setError("No se pudo conectar con el backend");
         } finally {
@@ -252,6 +295,7 @@ function App() {
                             onCreatePlayer={handleCreatePlayer}
                             onDeletePlayer={handleDeletePlayer}
                             onUpdatePlayerTag={handleUpdatePlayerTag}
+                            onUpdatePlayerDetails={handleUpdatePlayerDetails}
                         />
                     )}
                 </Container>

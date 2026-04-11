@@ -37,6 +37,15 @@ function Header() {
                 <p>¡LARGA VIDA A PAJARITOS!</p>
             </div>
 
+            <div className="header-links">
+                <a href="">
+                    <button>Panel del servidor</button>
+                </a>
+                <a href="">
+                    <button>Base de datos</button>
+                </a>
+            </div>
+
             <div className="header-session" ref={menuContainerRef}>
                 {user ? (
                     <>

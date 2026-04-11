@@ -1,5 +1,7 @@
 import React from 'react';
 import './LoginPage.css';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faKey, faUser } from '@fortawesome/free-solid-svg-icons';
 
 type LoginPageProps = {
   username: string;
@@ -22,7 +24,7 @@ function LoginPage({
     <form onSubmit={onSubmit} className="card-form">
       <h2>Login</h2>
       <div className="field-group">
-        <label htmlFor="username">Username</label>
+        <FontAwesomeIcon icon={faUser} />
         <input
           id="username"
           type='text'
@@ -31,7 +33,7 @@ function LoginPage({
         />
       </div>
       <div className="field-group">
-        <label htmlFor="password">Password</label>
+        <FontAwesomeIcon icon={faKey} />
         <input
           id="password"
           type="password"

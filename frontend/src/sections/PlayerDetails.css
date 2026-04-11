@@ -1,0 +1,51 @@
+.player-details-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: .75rem;
+}
+
+.player-details-header h2 {
+  margin-bottom: 0;
+}
+
+.player-details-close-button {
+  width: auto;
+}
+
+.player-details-actions {
+  display: flex;
+  gap: .5rem;
+}
+
+.player-details-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.player-details-grid h3 {
+  margin-top: 0;
+  margin-bottom: .5rem;
+}
+
+.player-details-grid p {
+  margin: .35rem 0;
+}
+
+.player-details-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.player-details-form label {
+  display: block;
+  margin: .5rem 0 .25rem;
+  font-size: .9rem;
+}
+
+.subscription-fields {
+  margin-top: .75rem;
+}

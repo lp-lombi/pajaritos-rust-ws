@@ -1,42 +1,47 @@
 import React, { useEffect, useRef, useState } from "react";
-import "./PlayerRegistration.css";
+import "./PlayersRegister.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faIdBadge, faListDots, faSearch, faTag } from "@fortawesome/free-solid-svg-icons";
 import Container from "../layout/Container";
 import { Player } from "../types";
 import ContextMenu from "../layout/ContextMenu";
 
-type PlayerRegistrationProps = {
+type PlayersRegisterProps = {
     steamid: string;
     tag: string;
     loadSubscription: boolean;
     players: Player[];
+    selectedPlayerId?: number | null;
     loading: boolean;
     onSteamidChange: (value: string) => void;
     onTagChange: (value: string) => void;
     onLoadSubscriptionChange: (value: boolean) => void;
+    onSelectPlayer?: (player: Player) => void;
     onSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
     onDeletePlayer: (playerId: number) => Promise<void>;
     onUpdatePlayerTag: (playerId: number, nextTag: string) => Promise<void>;
 };
 
-function PlayerRegistration({
+function PlayersRegister({
     steamid,
     tag,
     loadSubscription,
     players,
+    selectedPlayerId,
     loading,
     onSteamidChange,
     onTagChange,
     onLoadSubscriptionChange,
+    onSelectPlayer,
     onSubmit,
     onDeletePlayer,
     onUpdatePlayerTag,
-}: PlayerRegistrationProps) {
+}: PlayersRegisterProps) {
     const canSubmit = steamid.trim() !== "" && tag.trim() !== "";
     const [activePlayerId, setActivePlayerId] = useState<number | null>(null);
     const [playerFilter, setPlayerFilter] = useState("");
     const sectionRef = useRef<HTMLElement | null>(null);
+    const playerListRef = useRef<HTMLUListElement | null>(null);
     const normalizedFilter = playerFilter.trim().toLowerCase();
     const filteredPlayers = players.filter((player) => {
         if (!normalizedFilter) {
@@ -63,6 +68,47 @@ function PlayerRegistration({
         };
     }, []);
 
+    useEffect(() => {
+        if (!playerListRef.current || selectedPlayerId === null) {
+            return;
+        }
+
+        const selectedElement = playerListRef.current.querySelector<HTMLLIElement>(
+            `li[data-player-id="${selectedPlayerId}"]`,
+        );
+
+        selectedElement?.scrollIntoView({ block: "nearest" });
+    }, [selectedPlayerId]);
+
+    function handlePlayerListKeyDown(event: React.KeyboardEvent<HTMLUListElement>) {
+        if (event.key !== "ArrowDown" && event.key !== "ArrowUp") {
+            return;
+        }
+
+        if (filteredPlayers.length === 0) {
+            return;
+        }
+
+        event.preventDefault();
+
+        const currentIndex = filteredPlayers.findIndex((player) => player.id === selectedPlayerId);
+        let nextIndex = currentIndex;
+
+        if (currentIndex === -1) {
+            nextIndex = event.key === "ArrowDown" ? 0 : filteredPlayers.length - 1;
+        } else if (event.key === "ArrowDown") {
+            nextIndex = Math.min(currentIndex + 1, filteredPlayers.length - 1);
+        } else {
+            nextIndex = Math.max(currentIndex - 1, 0);
+        }
+
+        const nextPlayer = filteredPlayers[nextIndex];
+
+        if (nextPlayer) {
+            onSelectPlayer?.(nextPlayer);
+        }
+    }
+
     async function handleChangeTag(player: Player) {
         const nextTag = window.prompt("Nuevo tag del jugador", player.tag);
 
@@ -77,10 +123,23 @@ function PlayerRegistration({
         <section className="registered-players-section" ref={sectionRef}>
             <Container>
                 <h2>Jugadores registrados</h2>
-                <ul>
+                <ul
+                    ref={playerListRef}
+                    tabIndex={0}
+                    onKeyDown={handlePlayerListKeyDown}
+                    aria-label="Lista de jugadores registrados"
+                >
                     {filteredPlayers.length > 0 ? (
                         filteredPlayers.map((player) => (
-                            <li key={player.id}>
+                            <li
+                                key={player.id}
+                                data-player-id={player.id}
+                                className={selectedPlayerId === player.id ? "player-item selected" : "player-item"}
+                                onClick={() => {
+                                    onSelectPlayer?.(player);
+                                    playerListRef.current?.focus();
+                                }}
+                            >
                                 <div>
                                     <span>{player.tag}</span>
                                     <span>{player.steamid}</span>
@@ -182,4 +241,4 @@ function PlayerRegistration({
     );
 }
 
-export default PlayerRegistration;
+export default PlayersRegister;

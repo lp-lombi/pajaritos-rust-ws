@@ -200,32 +200,108 @@ AppDataSource.initialize()
       }
     });
 
-    // Ruta para actualizar tag de un player
+    // Ruta para actualizar datos de un player (tag y suscripcion)
     app.patch('/api/players/:id', async (req, res) => {
       try {
         const playerId = Number(req.params.id);
-        const normalizedTag = typeof req.body?.tag === 'string' ? req.body.tag.trim() : '';
+        const normalizedTag = typeof req.body?.tag === 'string' ? req.body.tag.trim() : undefined;
+        const hasSubscriptionField = Object.prototype.hasOwnProperty.call(req.body ?? {}, 'subscription');
+        const subscriptionInput = hasSubscriptionField ? req.body.subscription : undefined;
 
         if (!Number.isInteger(playerId) || playerId <= 0) {
           return res.status(400).json({ error: 'Id de player invalido' });
         }
 
-        if (!normalizedTag) {
-          return res.status(400).json({ error: 'El tag es requerido' });
+        if (normalizedTag !== undefined && !normalizedTag) {
+          return res.status(400).json({ error: 'El tag no puede estar vacio' });
         }
 
-        const playerRepository = AppDataSource.getRepository(Player);
-        const player = await playerRepository.findOne({ where: { id: playerId } });
+        if (normalizedTag === undefined && subscriptionInput === undefined) {
+          return res.status(400).json({ error: 'No hay datos para actualizar' });
+        }
 
-        if (!player) {
+        const updatedPlayer = await AppDataSource.manager.transaction(async (manager) => {
+          const playerRepository = manager.getRepository(Player);
+          const subscriptionRepository = manager.getRepository(Subscription);
+          const player = await playerRepository.findOne({
+            where: { id: playerId },
+            relations: ['subscription'],
+          });
+
+          if (!player) {
+            return null;
+          }
+
+          if (normalizedTag !== undefined) {
+            player.tag = normalizedTag;
+            await playerRepository.save(player);
+          }
+
+          if (subscriptionInput !== undefined) {
+            if (subscriptionInput === null) {
+              if (player.subscription) {
+                await subscriptionRepository.delete({ playerId: player.id });
+              }
+            } else {
+              const validFromRaw = typeof subscriptionInput?.validFrom === 'string'
+                ? subscriptionInput.validFrom.trim()
+                : '';
+              const validUntilRaw = typeof subscriptionInput?.validUntil === 'string'
+                ? subscriptionInput.validUntil.trim()
+                : '';
+
+              if (!validFromRaw || !validUntilRaw) {
+                throw new Error('invalid_subscription_dates');
+              }
+
+              const validFrom = new Date(validFromRaw);
+              const validUntil = new Date(validUntilRaw);
+
+              if (Number.isNaN(validFrom.getTime()) || Number.isNaN(validUntil.getTime())) {
+                throw new Error('invalid_subscription_dates');
+              }
+
+              if (validFrom > validUntil) {
+                throw new Error('invalid_subscription_range');
+              }
+
+              if (player.subscription) {
+                player.subscription.validFrom = validFrom;
+                player.subscription.validUntil = validUntil;
+                await subscriptionRepository.save(player.subscription);
+              } else {
+                const newSubscription = subscriptionRepository.create({
+                  playerId: player.id,
+                  validFrom,
+                  validUntil,
+                });
+                await subscriptionRepository.save(newSubscription);
+              }
+            }
+          }
+
+          return await playerRepository.findOne({
+            where: { id: playerId },
+            relations: ['subscription'],
+          });
+        });
+
+        if (!updatedPlayer) {
           return res.status(404).json({ error: 'Player no encontrado' });
         }
 
-        player.tag = normalizedTag;
-        const savedPlayer = await playerRepository.save(player);
-
-        res.json(savedPlayer);
+        res.json(updatedPlayer);
       } catch (error) {
+        if (error instanceof Error) {
+          if (error.message === 'invalid_subscription_dates') {
+            return res.status(400).json({ error: 'validFrom y validUntil son requeridos' });
+          }
+
+          if (error.message === 'invalid_subscription_range') {
+            return res.status(400).json({ error: 'validFrom no puede ser mayor que validUntil' });
+          }
+        }
+
         console.error('Error al actualizar player:', error);
         res.status(500).json({ error: 'Error en el servidor' });
       }

@@ -1,6 +1,13 @@
 .registered-players-section ul {
   list-style: none;
   padding: 0;
+  height: 400px;
+  overflow-y: auto;
+}
+
+.registered-players-section ul:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
 }
 
 .registered-players-section li {
@@ -10,6 +17,15 @@
   gap: 1rem;
   padding: 8px;
   position: relative;
+}
+
+.player-item {
+  cursor: pointer;
+}
+
+.player-item.selected {
+  outline: 1px solid var(--primary-color) !important;
+  z-index: 1;
 }
 
 .registered-players-section li:nth-child(odd) {

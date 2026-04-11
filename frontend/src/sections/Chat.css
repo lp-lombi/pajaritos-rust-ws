@@ -1,0 +1,16 @@
+.chat-log {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.chat-log div {
+    font-size: .9rem;
+    border-radius: 5px;
+    padding: 6px;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.chat-log div:nth-child(odd) {
+    background-color: var(--surface-color2);
+}

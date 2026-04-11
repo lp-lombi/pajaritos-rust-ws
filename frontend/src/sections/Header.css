@@ -2,14 +2,32 @@ header {
     width: 100%;
     border-bottom: 1px solid rgba(255, 255, 255, 0.12);
     background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+    padding: 0 24px;
     color: white;
-    padding: 16px 20px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 16px;
     text-align: left;
 }
+
+.header-links {
+    display: flex;
+    height: 70px; /* Maneja la altura de los botones y por consiguiente del header */
+}
+
+.header-links button {
+    font-weight: bold;
+    height: 100%;
+    background-color: inherit;
+    border: 0;
+    border-radius: 0;
+}
+
+.header-links button:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
 
 .header-title h1 {
     font-size: 1.4rem;
