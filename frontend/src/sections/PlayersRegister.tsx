@@ -4,7 +4,9 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faIdBadge, faListDots, faSearch, faTag } from "@fortawesome/free-solid-svg-icons";
 import Container from "../layout/Container";
 import { Player } from "../types";
-import ContextMenu from "../layout/ContextMenu";
+import ContextMenu from "../components/ContextMenu";
+
+type PlayerVisibilityFilter = "all" | "subscribed" | "unsubscribed";
 
 type PlayersRegisterProps = {
     steamid: string;
@@ -40,33 +42,25 @@ function PlayersRegister({
     const canSubmit = steamid.trim() !== "" && tag.trim() !== "";
     const [activePlayerId, setActivePlayerId] = useState<number | null>(null);
     const [playerFilter, setPlayerFilter] = useState("");
-    const sectionRef = useRef<HTMLElement | null>(null);
+    const [visibilityFilter, setVisibilityFilter] = useState<PlayerVisibilityFilter>("all");
     const playerListRef = useRef<HTMLUListElement | null>(null);
+    const playerMenuButtonRefs = useRef<Record<number, HTMLButtonElement | null>>({});
     const normalizedFilter = playerFilter.trim().toLowerCase();
     const filteredPlayers = players.filter((player) => {
-        if (!normalizedFilter) {
-            return true;
-        }
-
-        return (
+        const matchesText =
+            !normalizedFilter ||
             player.tag.toLowerCase().includes(normalizedFilter) ||
-            player.steamid.toLowerCase().includes(normalizedFilter)
-        );
+            player.steamid.toLowerCase().includes(normalizedFilter);
+
+        const isSubscribed = Boolean(player.subscription);
+
+        const matchesVisibility =
+            visibilityFilter === "all" ||
+            (visibilityFilter === "subscribed" && isSubscribed) ||
+            (visibilityFilter === "unsubscribed" && !isSubscribed);
+
+        return matchesText && matchesVisibility;
     });
-
-    useEffect(() => {
-        function handlePointerDown(event: MouseEvent) {
-            if (sectionRef.current && !sectionRef.current.contains(event.target as Node)) {
-                setActivePlayerId(null);
-            }
-        }
-
-        document.addEventListener("mousedown", handlePointerDown);
-
-        return () => {
-            document.removeEventListener("mousedown", handlePointerDown);
-        };
-    }, []);
 
     useEffect(() => {
         if (!playerListRef.current || selectedPlayerId === null) {
@@ -120,7 +114,7 @@ function PlayersRegister({
     }
 
     return (
-        <section className="registered-players-section" ref={sectionRef}>
+        <section className="registered-players-section">
             <Container>
                 <h2>Jugadores registrados</h2>
                 <ul
@@ -134,7 +128,11 @@ function PlayersRegister({
                             <li
                                 key={player.id}
                                 data-player-id={player.id}
-                                className={selectedPlayerId === player.id ? "player-item selected" : "player-item"}
+                                className={
+                                    selectedPlayerId === player.id
+                                        ? "player-item selected"
+                                        : "player-item"
+                                }
                                 onClick={() => {
                                     onSelectPlayer?.(player);
                                     playerListRef.current?.focus();
@@ -147,13 +145,14 @@ function PlayersRegister({
 
                                 <div className="player-actions">
                                     <button
+                                        ref={(element) => {
+                                            playerMenuButtonRefs.current[player.id] = element;
+                                        }}
                                         type="button"
                                         className="player-menu-button"
-                                        onClick={() =>
-                                            setActivePlayerId((prev) =>
-                                                prev === player.id ? null : player.id,
-                                            )
-                                        }
+                                        onClick={() => {
+                                            setActivePlayerId((prev) => (prev === player.id ? null : player.id));
+                                        }}
                                         aria-haspopup="menu"
                                         aria-label={`Abrir menu del jugador ${player.tag}`}
                                         disabled={loading}
@@ -163,6 +162,7 @@ function PlayersRegister({
 
                                     <ContextMenu
                                         isOpen={activePlayerId === player.id}
+                                        anchorElement={playerMenuButtonRefs.current[player.id] ?? null}
                                         onClose={() => setActivePlayerId(null)}
                                         options={[
                                             {
@@ -188,17 +188,43 @@ function PlayersRegister({
                         </li>
                     )}
                 </ul>
-                <div className="field-group player-filter-field">
-                    <FontAwesomeIcon icon={faSearch} />
-                    <input
-                        id="player-filter"
-                        type="text"
-                        value={playerFilter}
-                        onChange={(e) => setPlayerFilter(e.target.value)}
-                        placeholder="Filtrar por tag o steamid"
-                        className="text-input"
-                    />
+                <div className="player-filters">
+                    <div className="field-group player-filter-field">
+                        <FontAwesomeIcon icon={faSearch} />
+                        <input
+                            id="player-filter"
+                            type="text"
+                            value={playerFilter}
+                            onChange={(e) => setPlayerFilter(e.target.value)}
+                            placeholder="Filtrar por tag o steamid"
+                            className="text-input"
+                        />
+                    </div>
+                    <div className="player-filter-field">
+                        <button
+                            type="button"
+                            className={`player-filter-button ${visibilityFilter === "all" ? "active" : ""}`}
+                            onClick={() => setVisibilityFilter("all")}
+                        >
+                            Todos
+                        </button>
+                        <button
+                            type="button"
+                            className={`player-filter-button ${visibilityFilter === "subscribed" ? "active" : ""}`}
+                            onClick={() => setVisibilityFilter("subscribed")}
+                        >
+                            Suscritos
+                        </button>
+                        <button
+                            type="button"
+                            className={`player-filter-button ${visibilityFilter === "unsubscribed" ? "active" : ""}`}
+                            onClick={() => setVisibilityFilter("unsubscribed")}
+                        >
+                            No suscritos
+                        </button>
+                    </div>
                 </div>
+
                 <form onSubmit={onSubmit} className="card-form">
                     <h2>Registrar jugador</h2>
                     <div className="field-group">

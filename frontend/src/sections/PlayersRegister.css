@@ -81,6 +81,28 @@
   width: auto;
 }
 
+.player-filters {
+  margin-bottom: 2rem;
+}
+
 .player-filter-field {
-  margin: .5rem 0 2rem 0 !important;
+  display: flex;
+  margin: .5rem !important;
+}
+
+.player-filter-button {
+  margin: 0 .25rem;
+  padding: .35rem .75rem;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: var(--text-color);
+}
+
+.player-filter-button.active {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+.player-filter-button:hover {
+  background: var(--primary-color);
 }

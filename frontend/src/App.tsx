@@ -6,7 +6,7 @@ import { AuthProvider } from "./context/AuthContext";
 import { LoggedUser, Player } from "./types";
 import "./App.css";
 import Header from "./sections/Header";
-import StatusBar from "./layout/StatusBar";
+import StatusBar from "./components/StatusBar";
 
 type UpdatePlayerPayload = {
     tag?: string;

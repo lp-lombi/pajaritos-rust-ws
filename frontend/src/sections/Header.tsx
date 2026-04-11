@@ -1,34 +1,12 @@
 import "./Header.css";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useAuth } from "../context/AuthContext";
-import ContextMenu from "../layout/ContextMenu";
+import ContextMenu from "../components/ContextMenu";
 
 function Header() {
     const { user, logout } = useAuth();
     const [menuOpen, setMenuOpen] = useState(false);
-    const menuContainerRef = useRef<HTMLDivElement | null>(null);
-
-    useEffect(() => {
-        function handlePointerDown(event: MouseEvent) {
-            if (menuContainerRef.current && !menuContainerRef.current.contains(event.target as Node)) {
-                setMenuOpen(false);
-            }
-        }
-
-        function handleKeyDown(event: KeyboardEvent) {
-            if (event.key === "Escape") {
-                setMenuOpen(false);
-            }
-        }
-
-        document.addEventListener("mousedown", handlePointerDown);
-        document.addEventListener("keydown", handleKeyDown);
-
-        return () => {
-            document.removeEventListener("mousedown", handlePointerDown);
-            document.removeEventListener("keydown", handleKeyDown);
-        };
-    }, []);
+    const menuButtonRef = useRef<HTMLButtonElement | null>(null);
 
     return (
         <header>
@@ -38,15 +16,15 @@ function Header() {
             </div>
 
             <div className="header-links">
-                <a href="">
+{/*                 <a href="">
                     <button>Panel del servidor</button>
                 </a>
                 <a href="">
                     <button>Base de datos</button>
-                </a>
+                </a> */}
             </div>
 
-            <div className="header-session" ref={menuContainerRef}>
+            <div className="header-session">
                 {user ? (
                     <>
                         <span className="header-session-label">
@@ -54,6 +32,7 @@ function Header() {
                         </span>
 
                         <button
+                            ref={menuButtonRef}
                             type="button"
                             className="header-menu-button"
                             onClick={() => setMenuOpen((prev) => !prev)}
@@ -70,6 +49,7 @@ function Header() {
 
                         <ContextMenu
                             isOpen={menuOpen}
+                            anchorElement={menuButtonRef.current}
                             onClose={() => setMenuOpen(false)}
                             options={[
                                 {
