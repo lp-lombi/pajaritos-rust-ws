@@ -1,0 +1,70 @@
+.registered-players-section ul {
+  list-style: none;
+  padding: 0;
+}
+
+.registered-players-section li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 8px;
+  position: relative;
+}
+
+.registered-players-section li:nth-child(odd) {
+  background-color: var(--surface-color2);
+}
+
+.registered-players-section li:hover {
+  background-color: var(--primary-color);
+}
+
+.registered-players-section li span:nth-child(2n) {
+  font-size: .75rem;
+  color: var(--text-color-secondary);
+}
+
+.registered-players-section li > div:first-child {
+  display: flex;
+  flex-direction: column;
+}
+
+.registered-players-section li button {
+  border: 0;
+  align-items: center;
+}
+
+.player-actions {
+  position: relative;
+}
+
+.player-menu-button {
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-color);
+  font: inherit;
+  padding: .35rem .6rem;
+  cursor: pointer;
+}
+
+.player-menu-button:disabled {
+  opacity: .6;
+  cursor: not-allowed;
+}
+
+.checkbox-field {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  font-size: .95rem;
+}
+
+.checkbox-field input[type="checkbox"] {
+  width: auto;
+}
+
+.player-filter-field {
+  margin: .5rem 0 2rem 0 !important;
+}

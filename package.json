@@ -1,0 +1,10 @@
+{
+  "scripts": {
+    "dev:back": "npm run dev --workspace=backend",
+    "dev:front": "npm run dev --workspace=frontend",
+    "dev": "npm run dev:back & npm run dev:front"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19"
+  }
+}

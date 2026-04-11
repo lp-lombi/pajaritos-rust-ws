@@ -1,0 +1,26 @@
+.status-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  background: var(--surface-color1);
+  z-index: 1200;
+}
+
+.status-bar-message {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.status-bar-message.is-error {
+  color: #ff6b6b;
+}
+
+.status-bar-message.is-info {
+  color: #7edb95;
+}

@@ -1,0 +1,82 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --primary-color: #bf2828;
+  --secondary-color: #4b8a3a;
+  --text-color: #ffffff;
+  --text-color-secondary: #cccccc;
+
+  --background-color: #161616;
+  --surface-color1: #1e1e1e;
+  --surface-color2: #2a2a2a;
+
+}
+
+body {
+  font-family: Arial, sans-serif;
+  background-color: var(--background-color);
+  color: var(--text-color);
+  padding-bottom: 48px;
+}
+
+section {
+  padding: 20px;
+  margin: 20px;
+  background-color: var(--surface-color1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+h2, h3 {
+  margin-bottom: 12px;
+}
+
+button {
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.12);
+  color: white;
+  border-radius: 4px;
+  padding: 0.45rem 0.9rem;
+  font: inherit;
+  cursor: pointer;
+}
+
+button:hover {
+  background: var(--primary-color);
+}
+
+button:focus-visible,
+.context-menu-option:focus-visible {
+  outline: 2px solid white;
+  outline-offset: 2px;
+}
+
+input,
+input[type="text"],
+input[type="password"] {width: 100%;
+  padding: 8px;
+  box-sizing: border-box;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: var(--text-color);
+  background-color: var(--surface-color2);
+}
+
+
+.field-group {
+  display: flex;
+  margin-bottom: 16px;
+  gap: 1rem;
+  align-items: center;
+  font-size: 1.5rem;
+}
+

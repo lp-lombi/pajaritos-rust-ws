@@ -1,0 +1,32 @@
+.context-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    padding: .35rem;
+    text-align: left;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+    z-index: 1000;
+
+    min-width: 150px;
+    background-color: var(--background-color);
+}
+
+.context-menu-option {
+    display: block;
+    width: 100%;
+    padding: .55rem .75rem;
+    cursor: pointer;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text-color);
+    text-align: left;
+    font: inherit;
+}
+
+.context-menu-option:hover {
+    background-color: var(--primary-color);
+    color: white;
+}
