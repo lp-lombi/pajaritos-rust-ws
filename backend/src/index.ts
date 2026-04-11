@@ -1,6 +1,7 @@
 import 'reflect-metadata';
 import express from 'express';
 import cors from 'cors';
+import path from 'path';
 import { AppDataSource } from './database/connection';
 import { User } from './entities/User';
 import { Player } from './entities/Player';
@@ -16,6 +17,9 @@ const app = express();
 // Middlewares
 app.use(cors());
 app.use(express.json());
+
+const frontendBuildPath = path.resolve(__dirname, '..', 'public');
+app.use(express.static(frontendBuildPath));
 
 // Inicializar base de datos
 AppDataSource.initialize()
@@ -329,6 +333,10 @@ AppDataSource.initialize()
         console.error('Error al borrar player:', error);
         res.status(500).json({ error: 'Error en el servidor' });
       }
+    });
+
+    app.get('/', (req, res) => {
+      res.sendFile(path.join(frontendBuildPath, 'index.html'));
     });
 
     app.listen(3001, () => {

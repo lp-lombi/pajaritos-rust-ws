@@ -1,8 +1,11 @@
 {
   "scripts": {
-    "dev:back": "npm run dev --workspace=backend",
-    "dev:front": "npm run dev --workspace=frontend",
-    "dev": "npm run dev:back & npm run dev:front"
+    "dev:back": "npm --prefix backend run dev",
+    "dev:front": "npm --prefix frontend run dev",
+    "dev": "npm run dev:back & npm run dev:front",
+    "build:front": "npm --prefix frontend run build",
+    "build:front:copy-to-back": "node -e \"const fs=require('fs');const path=require('path');const src=path.join(process.cwd(),'frontend','dist');const dest=path.join(process.cwd(),'backend','public');if(!fs.existsSync(src)){console.error('No existe frontend/dist. Ejecuta primero build:front');process.exit(1);}fs.rmSync(dest,{recursive:true,force:true});fs.mkdirSync(dest,{recursive:true});fs.cpSync(src,dest,{recursive:true});console.log('Frontend compilado copiado en backend/public');\"",
+    "build:front-to-back": "npm run build:front && npm run build:front:copy-to-back"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19"
