@@ -45,6 +45,7 @@
 }
 
 .status-bar-actions button {
+  border-radius: 2px;
   border: 0;
   background: transparent;
 }
