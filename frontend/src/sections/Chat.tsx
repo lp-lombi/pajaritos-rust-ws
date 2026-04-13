@@ -2,20 +2,34 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import Container from '../layout/Container'
 
 import "./Chat.css"
+import { getChat, sendMessage } from '../services/http-client'
 
 function Chat() {
 
-    const [log, setLog] = useState<string[]>([
-        "El enano N: Buenas",
-        "Lombi: Nos raidean",
-        "El enano N: No se preocupen, tengo un plan",
-        "Lombi: ¿Cuál es el plan?",
-        "El enano N: Nos vamos a la casa de Lombi, ahí no nos van a encontrar",
-        "Lombi: Buena idea, vamos",
-        "El enano N: ¡Vamos!",
-        "Lombi: ¡Estamos a salvo!",
-        "El enano N: Sí, pero tenemos que estar atentos por si nos encuentran",
-    ])
+    const [log, setLog] = useState<string[]>([])
+
+    const updateChat = async () => {
+        try {
+            const data = await getChat()
+            if (data.messages) {
+                setLog(data.messages.map((m: { content: string }) => {
+                    const msg = m.content as string;
+                
+                    if (msg.startsWith("**")) {
+                        return msg.replace(/\*\*/g, '').trim();
+                    }
+                }).reverse()            
+            )
+            }
+        } catch (error) {
+            console.error('Error fetching chat messages:', error)
+        }
+    }
+
+    useEffect(() => {
+        updateChat()
+        setInterval(updateChat, 5000)
+    }, [])
 
     const chatLogRef = useRef<HTMLDivElement | null>(null)
     const shouldStickToBottomRef = useRef(true)
@@ -49,7 +63,7 @@ function Chat() {
         shouldStickToBottomRef.current = distanceFromBottom <= 8
     }
 
-    function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault()
 
         const input = event.currentTarget.elements.namedItem('message') as HTMLInputElement
@@ -59,8 +73,10 @@ function Chat() {
             return
         }
 
+        await sendMessage(value);
+        updateChat()
+
         shouldStickToBottomRef.current = true
-        setLog((previousLog) => [...previousLog, `SERVIDOR: ${value}`])
         input.value = ''
     }
 
