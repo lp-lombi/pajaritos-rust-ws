@@ -53,6 +53,15 @@ AppDataSource.initialize()
       res.json({ status: 'ok' });
     });
 
+
+    app.get("/api/rust/health", (req, res) => {
+        res.json({
+            connected: rcon.connected,
+            playerCount: rcon.playerCount,
+            chatMessagesCount: rcon.chatMessages.length,
+        });
+    });
+
     app.get('/api/rust/players', (req, res) => {
       rcon.updateData();
 
@@ -71,6 +80,26 @@ AppDataSource.initialize()
         count: rcon.chatMessages.length,
         messages: rcon.chatMessages,
       });
+    });
+
+    app.post('/api/rust/command', async (req, res) => {
+      const command = typeof req.body?.command === 'string' ? req.body.command.trim() : '';
+
+      if (!command) {
+        return res.status(400).json({ error: 'El campo "command" es obligatorio' });
+      }
+
+      if (!rcon.connected) {
+        return res.status(503).json({ error: 'RCON desconectado' });
+      }
+
+      try {
+        const response = await rcon.sendCommand(command, true);
+        return res.json({ ok: true, response });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Sin respuesta del RCON';
+        return res.status(504).json({ ok: false, error: message });
+      }
     });
 
     app.post('/api/rust/chat', (req, res) => {

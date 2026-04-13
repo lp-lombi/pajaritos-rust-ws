@@ -289,7 +289,7 @@ function App() {
                         />
                     )}
                 </Container>
-                <StatusBar message={statusMessage} type={statusType} />
+                <StatusBar message={statusMessage} type={statusType} user={user}/>
             </AuthProvider>
         </>
     );

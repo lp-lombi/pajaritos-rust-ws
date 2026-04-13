@@ -3,13 +3,25 @@
   left: 0;
   right: 0;
   bottom: 0;
-  min-height: 40px;
+  height: 35px;
   display: flex;
   align-items: center;
-  padding: 0.5rem 1rem;
+  padding: 0 1rem;
   border-top: 1px solid rgba(255, 255, 255, 0.15);
   background: var(--surface-color1);
   z-index: 1200;
+
+  font-size: 0.9rem;
+}
+
+.status-bar-info {
+  display: flex;
+  gap: 1rem;
+}
+
+.status-bar-info p {
+  border-right: 1px solid rgba(255, 255, 255, 0.15);
+  padding-right: 1rem;
 }
 
 .status-bar-message {
@@ -23,4 +35,24 @@
 
 .status-bar-message.is-info {
   color: #7edb95;
+}
+
+.status-bar-actions {
+  margin-left: auto;
+  display: flex;
+  height: 100%;
+  width: fit-content;
+}
+
+.status-bar-actions button {
+  border: 0;
+  background: transparent;
+}
+
+.status-bar-actions button:hover {
+  background-color: var(--primary-color);
+}
+
+.status-bar-actions button > * {
+  margin: 0 .5rem;
 }

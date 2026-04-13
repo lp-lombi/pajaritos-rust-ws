@@ -1,0 +1,10 @@
+.console-out {
+    height: 50vh;
+    min-height: 450px;
+    background-color: var(--surface-color2);
+}
+
+.console-in {
+    border: 0 !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.16) !important;
+}
