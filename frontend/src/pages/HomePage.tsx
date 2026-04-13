@@ -1,20 +1,20 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Player } from "../types";
 import "./HomePage.css";
-import PlayersRegister from "../sections/PlayersRegister";
+import PlayersRegList from "../sections/PlayersRegList";
 import Chat from "../sections/Chat";
 import PlayerDetails from "../sections/PlayerDetails";
 
-type HomePageProps = {
+type CreatePlayerPayload = {
     steamid: string;
     tag: string;
     loadSubscription: boolean;
+};
+
+type HomePageProps = {
     players: Player[];
     loading: boolean;
-    onSteamidChange: (value: string) => void;
-    onTagChange: (value: string) => void;
-    onLoadSubscriptionChange: (value: boolean) => void;
-    onCreatePlayer: (event: React.FormEvent<HTMLFormElement>) => void;
+    onCreatePlayer: (payload: CreatePlayerPayload) => Promise<boolean>;
     onDeletePlayer: (playerId: number) => Promise<void>;
     onUpdatePlayerTag: (playerId: number, nextTag: string) => Promise<void>;
     onUpdatePlayerDetails: (
@@ -30,14 +30,8 @@ type HomePageProps = {
 };
 
 function HomePage({
-    steamid,
-    tag,
-    loadSubscription,
     players,
     loading,
-    onSteamidChange,
-    onTagChange,
-    onLoadSubscriptionChange,
     onCreatePlayer,
     onDeletePlayer,
     onUpdatePlayerTag,
@@ -66,18 +60,12 @@ function HomePage({
     return (
         <div className="home-page">
             <div className="home-page-left-column">
-                <PlayersRegister
-                    steamid={steamid}
-                    tag={tag}
-                    loadSubscription={loadSubscription}
+                <PlayersRegList
                     players={players}
                     selectedPlayerId={selectedPlayerId}
                     loading={loading}
-                    onSteamidChange={onSteamidChange}
-                    onTagChange={onTagChange}
-                    onLoadSubscriptionChange={onLoadSubscriptionChange}
                     onSelectPlayer={(player) => setSelectedPlayerId(player.id)}
-                    onSubmit={onCreatePlayer}
+                    onCreatePlayer={onCreatePlayer}
                     onDeletePlayer={onDeletePlayer}
                     onUpdatePlayerTag={onUpdatePlayerTag}
                 />

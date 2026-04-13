@@ -1,46 +1,42 @@
 import React, { useEffect, useRef, useState } from "react";
-import "./PlayersRegister.css";
+import "./PlayersRegList.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faIdBadge, faListDots, faSearch, faTag } from "@fortawesome/free-solid-svg-icons";
+import { faListDots, faSearch } from "@fortawesome/free-solid-svg-icons";
 import Container from "../layout/Container";
 import { Player } from "../types";
 import ContextMenu from "../components/ContextMenu";
+import PlayerRegForm from "./PlayerRegForm";
+import FloatingSection from "../layout/FloatingSection";
 
-type PlayerVisibilityFilter = "all" | "subscribed" | "unsubscribed";
-
-type PlayersRegisterProps = {
+type CreatePlayerPayload = {
     steamid: string;
     tag: string;
     loadSubscription: boolean;
+};
+
+type PlayerVisibilityFilter = "all" | "subscribed" | "unsubscribed";
+
+type PlayersRegList = {
     players: Player[];
     selectedPlayerId?: number | null;
     loading: boolean;
-    onSteamidChange: (value: string) => void;
-    onTagChange: (value: string) => void;
-    onLoadSubscriptionChange: (value: boolean) => void;
     onSelectPlayer?: (player: Player) => void;
-    onSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
+    onCreatePlayer: (payload: CreatePlayerPayload) => Promise<boolean>;
     onDeletePlayer: (playerId: number) => Promise<void>;
     onUpdatePlayerTag: (playerId: number, nextTag: string) => Promise<void>;
 };
 
-function PlayersRegister({
-    steamid,
-    tag,
-    loadSubscription,
+function PlayersRegList({
     players,
     selectedPlayerId,
     loading,
-    onSteamidChange,
-    onTagChange,
-    onLoadSubscriptionChange,
     onSelectPlayer,
-    onSubmit,
+    onCreatePlayer,
     onDeletePlayer,
     onUpdatePlayerTag,
-}: PlayersRegisterProps) {
-    const canSubmit = steamid.trim() !== "" && tag.trim() !== "";
+}: PlayersRegList) {
     const [activePlayerId, setActivePlayerId] = useState<number | null>(null);
+    const [isRegFormOpen, setIsRegFormOpen] = useState(false);
     const [playerFilter, setPlayerFilter] = useState("");
     const [visibilityFilter, setVisibilityFilter] = useState<PlayerVisibilityFilter>("all");
     const playerListRef = useRef<HTMLUListElement | null>(null);
@@ -113,6 +109,16 @@ function PlayersRegister({
         await onUpdatePlayerTag(player.id, nextTag);
     }
 
+    async function handleCreatePlayer(payload: CreatePlayerPayload) {
+        const created = await onCreatePlayer(payload);
+
+        if (created) {
+            setIsRegFormOpen(false);
+        }
+
+        return created;
+    }
+
     return (
         <section className="registered-players-section">
             <Container>
@@ -151,7 +157,9 @@ function PlayersRegister({
                                         type="button"
                                         className="player-menu-button"
                                         onClick={() => {
-                                            setActivePlayerId((prev) => (prev === player.id ? null : player.id));
+                                            setActivePlayerId((prev) =>
+                                                prev === player.id ? null : player.id,
+                                            );
                                         }}
                                         aria-haspopup="menu"
                                         aria-label={`Abrir menu del jugador ${player.tag}`}
@@ -162,7 +170,9 @@ function PlayersRegister({
 
                                     <ContextMenu
                                         isOpen={activePlayerId === player.id}
-                                        anchorElement={playerMenuButtonRefs.current[player.id] ?? null}
+                                        anchorElement={
+                                            playerMenuButtonRefs.current[player.id] ?? null
+                                        }
                                         onClose={() => setActivePlayerId(null)}
                                         options={[
                                             {
@@ -225,46 +235,23 @@ function PlayersRegister({
                     </div>
                 </div>
 
-                <form onSubmit={onSubmit} className="card-form">
-                    <h2>Registrar jugador</h2>
-                    <div className="field-group">
-                        <FontAwesomeIcon icon={faIdBadge} />
-                        <input
-                            placeholder="Steam ID (Ej: 76561198000000000)"
-                            id="steamid"
-                            value={steamid}
-                            onChange={(e) => onSteamidChange(e.target.value)}
-                            className="text-input"
-                            maxLength={17}
-                            inputMode="numeric"
-                        />
-                    </div>
-                    <div className="field-group">
-                        <FontAwesomeIcon icon={faTag} />
-                        <input
-                            placeholder="Tag (Ej: El enano N)"
-                            id="tag"
-                            value={tag}
-                            onChange={(e) => onTagChange(e.target.value)}
-                            className="text-input"
-                        />
-                    </div>
-                    <label className="checkbox-field" htmlFor="load-subscription">
-                        <input
-                            id="load-subscription"
-                            type="checkbox"
-                            checked={loadSubscription}
-                            onChange={(e) => onLoadSubscriptionChange(e.target.checked)}
-                        />
-                        Cargar suscripcion
-                    </label>
-                    <button type="submit" disabled={loading || !canSubmit}>
-                        {loading ? "Guardando..." : "Registrar"}
-                    </button>
-                </form>
+                <button
+                    type="button"
+                    className="open-player-reg-form-button"
+                    onClick={() => setIsRegFormOpen(true)}
+                    disabled={loading}
+                >
+                    Registrar jugador
+                </button>
+
+                {isRegFormOpen && (
+                    <FloatingSection onBackgroundClick={() => setIsRegFormOpen(false)}>
+                        <PlayerRegForm onSubmit={handleCreatePlayer} />
+                    </FloatingSection>
+                )}
             </Container>
         </section>
     );
 }
 
-export default PlayersRegister;
+export default PlayersRegList;

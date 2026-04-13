@@ -16,6 +16,12 @@ type UpdatePlayerPayload = {
     } | null;
 };
 
+type CreatePlayerPayload = {
+    steamid: string;
+    tag: string;
+    loadSubscription: boolean;
+};
+
 const AUTH_USER_STORAGE_KEY = "auth_user";
 
 function getStoredUser(): LoggedUser | null {
@@ -37,9 +43,6 @@ function App() {
     const [loginUsername, setLoginUsername] = useState("admin");
     const [loginPassword, setLoginPassword] = useState("admin123");
     const [user, setUser] = useState<LoggedUser | null>(() => getStoredUser());
-    const [steamid, setSteamid] = useState("");
-    const [tag, setTag] = useState("");
-    const [loadSubscription, setLoadSubscription] = useState(false);
     const [players, setPlayers] = useState<Player[]>([]);
     const [error, setError] = useState("");
     const [info, setInfo] = useState("");
@@ -75,16 +78,8 @@ function App() {
     function handleLogout() {
         setUser(null);
         setPlayers([]);
-        setSteamid("");
-        setTag("");
-        setLoadSubscription(false);
         setError("");
         setInfo("Sesion cerrada");
-    }
-
-    function handleSteamidChange(value: string) {
-        const normalizedSteamid = value.replace(/\D/g, "").slice(0, 17);
-        setSteamid(normalizedSteamid);
     }
 
     async function handleLogin(event: React.FormEvent<HTMLFormElement>) {
@@ -128,12 +123,14 @@ function App() {
         }
     }
 
-    async function handleCreatePlayer(event: React.FormEvent<HTMLFormElement>) {
-        event.preventDefault();
-
+    async function handleCreatePlayer({
+        steamid,
+        tag,
+        loadSubscription,
+    }: CreatePlayerPayload): Promise<boolean> {
         if (!/^\d{17}$/.test(steamid.trim()) || tag.trim() === "") {
             setError("El steamid debe tener exactamente 17 digitos");
-            return;
+            return false;
         }
 
         setLoading(true);
@@ -154,16 +151,15 @@ function App() {
             const data = await response.json();
             if (!response.ok) {
                 setError(data.error ?? "No se pudo crear el player");
-                return;
+                return false;
             }
 
             setPlayers((prev) => [...prev, data]);
-            setSteamid("");
-            setTag("");
-            setLoadSubscription(false);
             setInfo("Player creado correctamente");
+            return true;
         } catch {
             setError("No se pudo conectar con el backend");
+            return false;
         } finally {
             setLoading(false);
         }
@@ -284,14 +280,8 @@ function App() {
 
                     {user && (
                         <HomePage
-                            steamid={steamid}
-                            tag={tag}
-                            loadSubscription={loadSubscription}
                             players={players}
                             loading={loading}
-                            onSteamidChange={handleSteamidChange}
-                            onTagChange={setTag}
-                            onLoadSubscriptionChange={setLoadSubscription}
                             onCreatePlayer={handleCreatePlayer}
                             onDeletePlayer={handleDeletePlayer}
                             onUpdatePlayerTag={handleUpdatePlayerTag}

@@ -70,17 +70,6 @@
   cursor: not-allowed;
 }
 
-.checkbox-field {
-  display: flex;
-  align-items: center;
-  gap: .5rem;
-  font-size: .95rem;
-}
-
-.checkbox-field input[type="checkbox"] {
-  width: auto;
-}
-
 .player-filters {
   margin-bottom: 2rem;
 }
@@ -105,4 +94,8 @@
 
 .player-filter-button:hover {
   background: var(--primary-color);
+}
+
+.open-player-reg-form-button {
+  margin-top: .5rem;
 }

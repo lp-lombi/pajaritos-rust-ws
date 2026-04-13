@@ -1,0 +1,10 @@
+.checkbox-field {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  font-size: .95rem;
+}
+
+.checkbox-field input[type="checkbox"] {
+  width: auto;
+}
