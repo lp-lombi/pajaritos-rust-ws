@@ -1,103 +1,110 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Container from '../layout/Container'
+import { getChat, sendRustSay } from '../services/http-client'
 
 import "./Chat.css"
-import { getChat, sendMessage } from '../services/http-client'
 
 function Chat() {
+    const [log, setLog] = useState<string[]>([]);
 
-    const [log, setLog] = useState<string[]>([])
-
-    const updateChat = async () => {
+    const updateChat = useCallback(async () => {
         try {
-            const data = await getChat()
-            if (data.messages) {
-                setLog(data.messages.map((m: { content: string }) => {
-                    const msg = m.content as string;
-                
-                    if (msg.startsWith("**")) {
-                        return msg.replace(/\*\*/g, '').trim();
-                    }
-                }).reverse()            
-            )
-            }
+            const data = await getChat();
+            const messages = Array.isArray(data?.messages)
+                ? data.messages.map((m: any) => {
+                    if (typeof m?.content === 'string') return m.content;
+
+                    const user = typeof m?.user === 'string' ? m.user : 'Unknown';
+                    const message = typeof m?.message === 'string' ? m.message : '';
+                    return `${user}: ${message}`;
+                })
+                : [];
+            setLog(messages);
         } catch (error) {
-            console.error('Error fetching chat messages:', error)
+            console.error('Error obteniendo chat:', error);
         }
-    }
+    }, []);
 
     useEffect(() => {
-        updateChat()
-        setInterval(updateChat, 5000)
-    }, [])
+        updateChat();
+        const id = setInterval(updateChat, 1000);
+        return () => clearInterval(id);
+    }, [updateChat]);
 
-    const chatLogRef = useRef<HTMLDivElement | null>(null)
-    const shouldStickToBottomRef = useRef(true)
+    const chatLogRef = useRef<HTMLDivElement | null>(null);
+    const shouldStickToBottomRef = useRef(true);
 
     const scrollToBottom = useCallback(() => {
-        const chatLogElement = chatLogRef.current
+        const chatLogElement = chatLogRef.current;
 
         if (!chatLogElement) {
-            return
+            return;
         }
 
-        chatLogElement.scrollTop = chatLogElement.scrollHeight
-    }, [])
+        chatLogElement.scrollTop = chatLogElement.scrollHeight;
+    }, []);
 
     useEffect(() => {
         if (shouldStickToBottomRef.current) {
-            scrollToBottom()
+            scrollToBottom();
         }
-    }, [log, scrollToBottom])
+    }, [log, scrollToBottom]);
 
     function handleChatScroll() {
-        const chatLogElement = chatLogRef.current
+        const chatLogElement = chatLogRef.current;
 
         if (!chatLogElement) {
-            return
+            return;
         }
 
         const distanceFromBottom =
-            chatLogElement.scrollHeight - chatLogElement.scrollTop - chatLogElement.clientHeight
+            chatLogElement.scrollHeight - chatLogElement.scrollTop - chatLogElement.clientHeight;
 
-        shouldStickToBottomRef.current = distanceFromBottom <= 8
+        shouldStickToBottomRef.current = distanceFromBottom <= 8;
     }
 
     async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-        event.preventDefault()
+        event.preventDefault();
 
-        const input = event.currentTarget.elements.namedItem('message') as HTMLInputElement
-        const value = input.value.trim()
+        const input = event.currentTarget.elements.namedItem("message") as HTMLInputElement;
+        const value = input.value.trim();
 
-        if (value === '') {
-            return
+        if (value === "") {
+            return;
         }
 
-        await sendMessage(value);
-        updateChat()
+        await sendRustSay(value);
+        await updateChat();
 
-        shouldStickToBottomRef.current = true
-        input.value = ''
+        shouldStickToBottomRef.current = true;
+        input.value = "";
     }
 
-  return (
-    <section className='chat-section'>
-        <Container>
-            <h2>Chat</h2>
-            <div className='chat-log' ref={chatLogRef} onScroll={handleChatScroll}>
-                {log.map((message, index) => (
-                    <div key={index} className='chat-message'>
-                        {message}
-                    </div>
-                ))}
-            </div>
-            <form className='chat-form' onSubmit={handleSubmit}>
-                <input type="text" name="message" placeholder="Enviar mensaje [SERVIDOR]" className='chat-input' />
-                <button type="submit" className='chat-submit'>Enviar</button>
-            </form>
-        </Container>
-    </section>
-  )
+    return (
+        <section className="chat-section">
+            <Container>
+                <h2>Chat</h2>
+                <div className="chat-log" ref={chatLogRef} onScroll={handleChatScroll}>
+                    {log.map((message, index) => (
+                        <div key={index} className="chat-message">
+                            {message}
+                        </div>
+                    ))}
+                </div>
+                <form className="chat-form" onSubmit={handleSubmit}>
+                    <input
+                        type="text"
+                        name="message"
+                        placeholder="Enviar mensaje [SERVIDOR]"
+                        className="chat-input"
+                    />
+                    <button type="submit" className="chat-submit">
+                        Enviar
+                    </button>
+                </form>
+            </Container>
+        </section>
+    );
 }
 
 export default Chat

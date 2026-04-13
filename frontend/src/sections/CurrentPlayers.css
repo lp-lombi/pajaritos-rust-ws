@@ -1,0 +1,4 @@
+.current-players ul {
+    height: 250px;
+    overflow-y: auto;
+}

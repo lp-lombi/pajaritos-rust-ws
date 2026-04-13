@@ -4,6 +4,7 @@ import "./HomePage.css";
 import PlayersRegList from "../sections/PlayersRegList";
 import Chat from "../sections/Chat";
 import PlayerDetails from "../sections/PlayerDetails";
+import CurrentPlayers from "../sections/CurrentPlayers";
 
 type CreatePlayerPayload = {
     steamid: string;
@@ -80,6 +81,7 @@ function HomePage({
             </div>
 
             <div className="home-page-right-column">
+                <CurrentPlayers />
                 <Chat />
             </div>
         </div>

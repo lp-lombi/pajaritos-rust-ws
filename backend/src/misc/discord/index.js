@@ -49,7 +49,6 @@ class RustRcon {
         
         this.ws.on('open', () => {
             this.connected = true;
-            console.log("✅ RCON Conectado");
             this.updateData();
         });
 

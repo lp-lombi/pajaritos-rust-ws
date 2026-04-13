@@ -9,8 +9,22 @@ import { Role } from './entities/Role';
 import { Subscription } from './entities/Subscription';
 import { comparePasswords } from './utils/passwordUtils';
 import { hashPassword } from './utils/passwordUtils';
+import { RustRcon } from './utils/rustRcon';
 
 const SUBSCRIPTION_VALIDITY_DAYS = 30;
+
+const RCON_HOST = process.env.RCON_HOST || '187.77.235.159';
+const RCON_PORT = Number(process.env.RCON_PORT || '28017');
+const RCON_PASSWORD = "ignamelacome";
+const RCON_RECONNECT_MS = 5000;
+const MAX_CHAT_MESSAGES = 200;
+const rcon = new RustRcon({
+  host: RCON_HOST,
+  port: RCON_PORT,
+  password: RCON_PASSWORD,
+  reconnectMs: RCON_RECONNECT_MS,
+  maxChatMessages: MAX_CHAT_MESSAGES,
+});
 
 const app = express();
 
@@ -37,6 +51,47 @@ AppDataSource.initialize()
     // Rutas básicas
     app.get('/api/health', (req, res) => {
       res.json({ status: 'ok' });
+    });
+
+    app.get('/api/rust/players', (req, res) => {
+      rcon.updateData();
+
+      res.json({
+        connected: rcon.connected,
+        playerCount: rcon.playerCount,
+        players: rcon.playersList,
+      });
+    });
+
+    app.get('/api/rust/chat', (req, res) => {
+      rcon.updateData();
+
+      res.json({
+        connected: rcon.connected,
+        count: rcon.chatMessages.length,
+        messages: rcon.chatMessages,
+      });
+    });
+
+    app.post('/api/rust/chat', (req, res) => {
+      const message = typeof req.body?.message === 'string' ? req.body.message.trim() : '';
+
+      if (!message) {
+        return res.status(400).json({ error: 'El campo "message" es obligatorio' });
+      }
+
+      if (!rcon.connected) {
+        return res.status(503).json({ error: 'RCON desconectado' });
+      }
+
+      const escapedMessage = message.replace(/"/g, '\\"');
+      const sent = rcon.sendCommand(`say "${escapedMessage}"`);
+
+      if (!sent) {
+        return res.status(503).json({ error: 'RCON desconectado' });
+      }
+
+      return res.status(201).json({ ok: true });
     });
 
     // Ruta de registro
@@ -342,6 +397,8 @@ AppDataSource.initialize()
     app.listen(3001, () => {
       console.log('Servidor corriendo en puerto 3001');
     });
+
+    rcon.connect();
   })
   .catch((error) => {
     console.error('Error al conectar la base de datos:', error);
