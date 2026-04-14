@@ -55,11 +55,11 @@ AppDataSource.initialize()
 
 
     app.get("/api/rust/health", (req, res) => {
-        res.json({
-            connected: rcon.connected,
-            playerCount: rcon.playerCount,
-            chatMessagesCount: rcon.chatMessages.length,
-        });
+      res.json({
+        connected: rcon.connected,
+        playerCount: rcon.playerCount,
+        chatMessagesCount: rcon.chatMessages.length,
+      });
     });
 
     app.get('/api/rust/players', (req, res) => {
@@ -82,6 +82,7 @@ AppDataSource.initialize()
       });
     });
 
+    // El back manda el contenido formateado con saltos de linea
     app.post('/api/rust/command', async (req, res) => {
       const command = typeof req.body?.command === 'string' ? req.body.command.trim() : '';
 
