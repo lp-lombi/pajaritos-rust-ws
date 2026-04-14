@@ -2,8 +2,6 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import "./StatusBar.css";
 import { faTerminal } from "@fortawesome/free-solid-svg-icons";
 import { useEffect, useState } from "react";
-import RustConsole from "../sections/RustConsole";
-import FloatingSection from "../layout/FloatingSection";
 import { LoggedUser } from "../types";
 
 type StatusType = "info" | "error";
@@ -12,12 +10,19 @@ type StatusBarProps = {
   message?: string;
   type?: StatusType;
   user?: LoggedUser | null;
+  consoleVisible: boolean;
+  onToggleConsole: () => void;
 };
 
 type RconStatus = "OK" | "CAIDO" | "...";
 
-function StatusBar({ message, type, user }: StatusBarProps) {
-  const [consoleVisible, setConsoleVisible] = useState(false);
+function StatusBar({
+  message,
+  type,
+  user,
+  consoleVisible,
+  onToggleConsole,
+}: StatusBarProps) {
   const [rconStatus, setRconStatus] = useState<RconStatus>("...");
 
   const fetchRconHealth = async () => {
@@ -60,21 +65,13 @@ function StatusBar({ message, type, user }: StatusBarProps) {
         </div>
         {user && (
           <div className="status-bar-actions">
-            <button onClick={() => setConsoleVisible((v) => !v)}>
+            <button onClick={onToggleConsole}>
               <FontAwesomeIcon icon={faTerminal} />
-              Consola
+              {consoleVisible ? "Cerrar consola" : "Consola"}
             </button>
           </div>
         )}
       </footer>
-      {consoleVisible && (
-        <FloatingSection
-          onBackgroundClick={() => setConsoleVisible(!consoleVisible)}
-          wide={true}
-        >
-          <RustConsole />
-        </FloatingSection>
-      )}
     </>
   );
 }

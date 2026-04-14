@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "./RustConsole.css";
 
 interface LogEntry {
@@ -17,9 +17,19 @@ type CommandApiResponse = {
   };
 };
 
-function RustConsole() {
+type CommandRequest = {
+  id: number;
+  command: string;
+};
+
+type RustConsoleProps = {
+  commandRequest?: CommandRequest | null;
+};
+
+function RustConsole({ commandRequest }: RustConsoleProps) {
   const [commandLog, setCommandLog] = useState<LogEntry[]>([]);
   const [isWaitingResponse, setIsWaitingResponse] = useState(false);
+  const [commandQueue, setCommandQueue] = useState<string[]>([]);
 
   const formatResponseMessage = (data: CommandApiResponse) => {
     if (
@@ -40,11 +50,7 @@ function RustConsole() {
     return "Comando ejecutado sin respuesta textual";
   };
 
-  const sendCommand = async (command: string) => {
-    if (isWaitingResponse) {
-      return;
-    }
-
+  const runCommand = async (command: string) => {
     setIsWaitingResponse(true);
 
     try {
@@ -76,6 +82,34 @@ function RustConsole() {
     }
   };
 
+  const enqueueCommand = (command: string) => {
+    const normalizedCommand = command.trim();
+
+    if (!normalizedCommand) {
+      return;
+    }
+
+    setCommandQueue((prev) => [...prev, normalizedCommand]);
+  };
+
+  useEffect(() => {
+    if (!commandRequest?.command) {
+      return;
+    }
+
+    enqueueCommand(commandRequest.command);
+  }, [commandRequest?.id, commandRequest?.command]);
+
+  useEffect(() => {
+    if (isWaitingResponse || commandQueue.length === 0) {
+      return;
+    }
+
+    const [nextCommand, ...rest] = commandQueue;
+    setCommandQueue(rest);
+    void runCommand(nextCommand);
+  }, [commandQueue, isWaitingResponse]);
+
   return (
     <div className="console">
       <h2>Emulador de consola de Rust</h2>
@@ -101,8 +135,8 @@ function RustConsole() {
               e.preventDefault();
               const input = e.currentTarget as HTMLInputElement;
               const command = input.value.trim();
-              if (command && !isWaitingResponse) {
-                sendCommand(command);
+              if (command) {
+                enqueueCommand(command);
                 input.value = "";
               }
             }

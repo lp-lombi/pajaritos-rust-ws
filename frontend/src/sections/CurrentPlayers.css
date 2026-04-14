@@ -1,4 +1,8 @@
 .current-players ul {
-    height: 250px;
-    overflow-y: auto;
+  height: 250px;
+  overflow-y: auto;
+}
+
+.current-player-item {
+  cursor: pointer;
 }
