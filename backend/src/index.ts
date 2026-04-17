@@ -26,6 +26,71 @@ const rcon = new RustRcon({
   maxChatMessages: MAX_CHAT_MESSAGES,
 });
 
+type SteamProfileResponse = {
+  steamId: string;
+  avatarIcon: string | null;
+  avatarMedium: string | null;
+  avatarFull: string | null;
+};
+
+function extractXmlValue(xml: string, tagName: string): string | null {
+  const cdataStart = `<${tagName}><![CDATA[`;
+  const cdataEnd = `]]></${tagName}>`;
+
+  const cdataStartIndex = xml.indexOf(cdataStart);
+  if (cdataStartIndex !== -1) {
+    const valueStart = cdataStartIndex + cdataStart.length;
+    const valueEnd = xml.indexOf(cdataEnd, valueStart);
+
+    if (valueEnd !== -1) {
+      return xml.slice(valueStart, valueEnd).trim() || null;
+    }
+  }
+
+  const plainStart = `<${tagName}>`;
+  const plainEnd = `</${tagName}>`;
+  const plainStartIndex = xml.indexOf(plainStart);
+
+  if (plainStartIndex !== -1) {
+    const valueStart = plainStartIndex + plainStart.length;
+    const valueEnd = xml.indexOf(plainEnd, valueStart);
+
+    if (valueEnd !== -1) {
+      return xml.slice(valueStart, valueEnd).trim() || null;
+    }
+  }
+
+  return null;
+}
+
+async function fetchSteamProfile(steamId: string): Promise<SteamProfileResponse> {
+  const response = await fetch(`https://steamcommunity.com/profiles/${steamId}/?xml=1`, {
+    headers: {
+      "User-Agent": "Mozilla/5.0",
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Steam responded with status ${response.status}`);
+  }
+
+  const xml = await response.text();
+  const avatarIcon = extractXmlValue(xml, "avatarIcon");
+  const avatarMedium = extractXmlValue(xml, "avatarMedium");
+  const avatarFull = extractXmlValue(xml, "avatarFull");
+
+  if (!avatarIcon && !avatarMedium && !avatarFull) {
+    throw new Error("Steam profile avatar not found");
+  }
+
+  return {
+    steamId,
+    avatarIcon,
+    avatarMedium,
+    avatarFull,
+  };
+}
+
 const app = express();
 
 // Middlewares
@@ -80,6 +145,22 @@ AppDataSource.initialize()
         count: rcon.chatMessages.length,
         messages: rcon.chatMessages,
       });
+    });
+
+    app.get('/api/steam/profile/:steamId', async (req, res) => {
+      const steamId = typeof req.params.steamId === 'string' ? req.params.steamId.trim() : '';
+
+      if (!/^\d{17}$/.test(steamId)) {
+        return res.status(400).json({ error: 'SteamID invalido' });
+      }
+
+      try {
+        const profile = await fetchSteamProfile(steamId);
+        return res.json(profile);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'No se pudo obtener el perfil de Steam';
+        return res.status(502).json({ error: message });
+      }
     });
 
     // El back manda el contenido formateado con saltos de linea

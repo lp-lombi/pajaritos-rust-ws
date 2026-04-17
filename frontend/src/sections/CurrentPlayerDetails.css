@@ -1,3 +1,18 @@
+.current-player-avatar-wrap {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.current-player-avatar {
+  width: 96px;
+  height: 96px;
+  border-radius: 18px;
+  object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.25);
+}
+
 .current-player-details h3 {
   text-align: center;
 }

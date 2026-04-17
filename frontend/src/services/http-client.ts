@@ -26,3 +26,21 @@ export const sendRustSay = async (message: string): Promise<void> => {
         throw new Error(`HTTP error! status: ${response.status}`)
     }
 }
+
+type SteamProfileResponse = {
+    steamId: string;
+    avatarIcon: string | null;
+    avatarMedium: string | null;
+    avatarFull: string | null;
+};
+
+export const getSteamProfile = async (steamId: string): Promise<SteamProfileResponse> => {
+    const response = await fetch(`/api/steam/profile/${steamId}`)
+
+    if (!response.ok) {
+        const data = await response.json().catch(() => null)
+        throw new Error(data?.error ?? `HTTP error! status: ${response.status}`)
+    }
+
+    return await response.json() as SteamProfileResponse
+}
