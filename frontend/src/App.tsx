@@ -1,8 +1,12 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import Container from "./layout/Container";
 import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import { AuthProvider } from "./context/AuthContext";
+import {
+  RustConsoleProvider,
+  useRustConsole,
+} from "./context/RustConsoleContext";
 import { LoggedUser, Player } from "./types";
 import "./App.css";
 import Header from "./sections/Header";
@@ -24,11 +28,6 @@ type CreatePlayerPayload = {
   loadSubscription: boolean;
 };
 
-type ConsoleCommandRequest = {
-  id: number;
-  command: string;
-};
-
 const AUTH_USER_STORAGE_KEY = "auth_user";
 
 function getStoredUser(): LoggedUser | null {
@@ -46,7 +45,7 @@ function getStoredUser(): LoggedUser | null {
   }
 }
 
-function App() {
+function AppContent() {
   const [loginUsername, setLoginUsername] = useState("admin");
   const [loginPassword, setLoginPassword] = useState("admin123");
   const [user, setUser] = useState<LoggedUser | null>(() => getStoredUser());
@@ -55,9 +54,7 @@ function App() {
   const [info, setInfo] = useState("");
   const [loading, setLoading] = useState(false);
   const [consoleVisible, setConsoleVisible] = useState(false);
-  const [consoleCommandRequest, setConsoleCommandRequest] =
-    useState<ConsoleCommandRequest | null>(null);
-  const consoleRequestIdRef = useRef(0);
+  const { enqueueCommand } = useRustConsole();
   const statusType = error ? "error" : info ? "info" : undefined;
   const statusMessage = error || info;
 
@@ -68,17 +65,13 @@ function App() {
   function handleOpenConsoleWithCommand(command: string) {
     const normalizedCommand = command.trim();
 
+    setConsoleVisible(true);
+
     if (!normalizedCommand) {
-      setConsoleVisible(true);
       return;
     }
 
-    setConsoleVisible(true);
-    consoleRequestIdRef.current += 1;
-    setConsoleCommandRequest({
-      id: consoleRequestIdRef.current,
-      command: normalizedCommand,
-    });
+    enqueueCommand(normalizedCommand);
   }
 
   useEffect(() => {
@@ -344,11 +337,19 @@ function App() {
             onBackgroundClick={() => setConsoleVisible(false)}
             wide={true}
           >
-            <RustConsole commandRequest={consoleCommandRequest} />
+            <RustConsole />
           </FloatingSection>
         )}
       </AuthProvider>
     </>
+  );
+}
+
+function App() {
+  return (
+    <RustConsoleProvider>
+      <AppContent />
+    </RustConsoleProvider>
   );
 }
 

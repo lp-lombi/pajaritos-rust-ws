@@ -1,101 +1,113 @@
 import React, { useEffect } from "react";
-import Container from "../layout/Container";
 import ContextMenu from "../components/ContextMenu";
 
 import "./CurrentPlayers.css";
-
-interface PlayerData {
-  name: string;
-  ping: number;
-}
+import { useRustConsole } from "../context/RustConsoleContext";
+import { CommandsParser, RustPlayer } from "../services/commands-parser";
+import CurrentPlayerDetails from "./CurrentPlayerDetails";
+import FloatingSection from "../layout/FloatingSection";
+import { usePlayerRegForm } from "../context/PlayerRegFormContext";
 
 type CurrentPlayersProps = {
   onOpenConsoleWithCommand: (command: string) => void;
 };
 
 function CurrentPlayers({ onOpenConsoleWithCommand }: CurrentPlayersProps) {
-  const [players, setPlayers] = React.useState<PlayerData[]>([]);
+  const { executeCommand } = useRustConsole();
+  const { openPlayerRegForm } = usePlayerRegForm();
+
+  const [players, setPlayers] = React.useState<RustPlayer[]>([]);
   const [activePlayerName, setActivePlayerName] = React.useState<string | null>(
     null,
   );
+  const [selectedPlayer, setSelectedPlayer] = React.useState<RustPlayer | null>(
+    null,
+  );
+
   const playerItemRefs = React.useRef<Record<string, HTMLLIElement | null>>({});
 
   const updatePlayers = async () => {
     try {
-      const response = await fetch("/api/rust/players");
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data = await response.json();
-      if (Array.isArray(data?.players)) {
-        const validPlayers: PlayerData[] = data.players
-          .map((p: string) => {
-            // el ping viene (90 ms). Ej: Pablo (90 ms)
-            const match = p.match(/^(.*)\s+\((\d+)\s*ms\)$/);
-            if (match) {
-              return {
-                name: match[1],
-                ping: parseInt(match[2], 10),
-              };
-            }
-          })
-          .filter(
-            (p: PlayerData | undefined): p is PlayerData => p !== undefined,
-          );
-        setPlayers(validPlayers);
-      }
+      const response = await executeCommand("playerlist");
+      const output = response.response?.message ?? "[]";
+      const parsedPlayers = CommandsParser.parsePlayersList(output);
+
+      setPlayers(parsedPlayers);
     } catch (error) {
       console.error("Error obteniendo jugadores:", error);
     }
   };
 
   useEffect(() => {
-    updatePlayers();
-    const id = setInterval(updatePlayers, 5000);
-    return () => clearInterval(id);
-  }, []);
+    void updatePlayers();
+    const id = window.setInterval(() => {
+      void updatePlayers();
+    }, 5000);
+    return () => window.clearInterval(id);
+  }, [executeCommand]);
 
   function handleOpenCombatlog(playerName: string) {
     onOpenConsoleWithCommand(`combatlog ${playerName}`);
   }
 
+  function handleRegisterPlayer(player: RustPlayer) {
+    setSelectedPlayer(null);
+    openPlayerRegForm({
+      steamid: player.steamId,
+      tag: player.displayName,
+      loadSubscription: false,
+    });
+  }
+
   return (
     <section className="current-players">
-      <Container>
-        <h2>Jugadores ({players.length})</h2>
-        <ul>
-          {players.map((player, index) => (
-            <li
-              key={`${player.name}-${index}`}
-              ref={(element) => {
-                playerItemRefs.current[player.name] = element;
-              }}
-              className="current-player-item"
-              onClick={() => {
-                setActivePlayerName((prev) =>
-                  prev === player.name ? null : player.name,
-                );
-              }}
-            >
-              {player.name}
-
-              <ContextMenu
-                isOpen={activePlayerName === player.name}
-                anchorElement={playerItemRefs.current[player.name] ?? null}
-                onClose={() => setActivePlayerName(null)}
-                options={[
-                  {
-                    label: `Combatlog`,
-                    onClick: () => {
-                      handleOpenCombatlog(player.name);
-                    },
+      <h2>Jugadores ({players.length})</h2>
+      <ul>
+        {players.map((player, index) => (
+          <li
+            key={`${player.displayName}-${index}`}
+            ref={(element) => {
+              playerItemRefs.current[player.displayName] = element;
+            }}
+            className="current-player-item"
+            onClick={() => {
+              setActivePlayerName((prev) =>
+                prev === player.displayName ? null : player.displayName,
+              );
+            }}
+          >
+            {player.displayName} (Ping: {player.ping}ms, IP: {player.ip})
+            <ContextMenu
+              isOpen={activePlayerName === player.displayName}
+              anchorElement={playerItemRefs.current[player.displayName] ?? null}
+              onClose={() => setActivePlayerName(null)}
+              options={[
+                {
+                  label: `Detalles`,
+                  onClick: () => {
+                    setSelectedPlayer(player);
+                    setActivePlayerName(null);
                   },
-                ]}
-              />
-            </li>
-          ))}
-        </ul>
-      </Container>
+                },
+                {
+                  label: `Combatlog`,
+                  onClick: () => {
+                    handleOpenCombatlog(player.displayName);
+                  },
+                },
+              ]}
+            />
+          </li>
+        ))}
+      </ul>
+      {selectedPlayer && (
+        <FloatingSection onBackgroundClick={() => setSelectedPlayer(null)}>
+          <CurrentPlayerDetails
+            player={selectedPlayer}
+            onRegister={handleRegisterPlayer}
+          />
+        </FloatingSection>
+      )}
     </section>
   );
 }

@@ -18,9 +18,7 @@ function FloatingSection({
         className="floating-section-background"
         onClick={onBackgroundClick}
       />
-      <section>
-        <Container>{children}</Container>
-      </section>
+      <section>{children}</section>
     </div>
   );
 }

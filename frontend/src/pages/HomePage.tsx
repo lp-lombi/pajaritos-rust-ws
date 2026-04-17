@@ -5,6 +5,7 @@ import PlayersRegList from "../sections/PlayersRegList";
 import Chat from "../sections/Chat";
 import PlayerDetails from "../sections/PlayerDetails";
 import CurrentPlayers from "../sections/CurrentPlayers";
+import { PlayerRegFormProvider } from "../context/PlayerRegFormContext";
 
 type CreatePlayerPayload = {
   steamid: string;
@@ -61,32 +62,34 @@ function HomePage({
   );
 
   return (
-    <div className="home-page">
-      <div className="home-page-left-column">
-        <PlayersRegList
-          players={players}
-          selectedPlayerId={selectedPlayerId}
-          loading={loading}
-          onSelectPlayer={(player) => setSelectedPlayerId(player.id)}
-          onCreatePlayer={onCreatePlayer}
-          onDeletePlayer={onDeletePlayer}
-          onUpdatePlayerTag={onUpdatePlayerTag}
-        />
-        {selectedPlayer && (
-          <PlayerDetails
-            player={selectedPlayer}
+    <PlayerRegFormProvider>
+      <div className="home-page">
+        <div className="home-page-left-column">
+          <PlayersRegList
+            players={players}
+            selectedPlayerId={selectedPlayerId}
             loading={loading}
-            onClose={() => setSelectedPlayerId(null)}
-            onUpdatePlayerDetails={onUpdatePlayerDetails}
+            onSelectPlayer={(player) => setSelectedPlayerId(player.id)}
+            onCreatePlayer={onCreatePlayer}
+            onDeletePlayer={onDeletePlayer}
+            onUpdatePlayerTag={onUpdatePlayerTag}
           />
-        )}
-      </div>
+          {selectedPlayer && (
+            <PlayerDetails
+              player={selectedPlayer}
+              loading={loading}
+              onClose={() => setSelectedPlayerId(null)}
+              onUpdatePlayerDetails={onUpdatePlayerDetails}
+            />
+          )}
+        </div>
 
-      <div className="home-page-right-column">
-        <CurrentPlayers onOpenConsoleWithCommand={onOpenConsoleWithCommand} />
-        <Chat />
+        <div className="home-page-right-column">
+          <CurrentPlayers onOpenConsoleWithCommand={onOpenConsoleWithCommand} />
+          <Chat />
+        </div>
       </div>
-    </div>
+    </PlayerRegFormProvider>
   );
 }
 

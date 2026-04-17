@@ -1,0 +1,15 @@
+.current-player-details h3 {
+  text-align: center;
+}
+
+.current-player-details-field {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.current-player-details-actions {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+}
