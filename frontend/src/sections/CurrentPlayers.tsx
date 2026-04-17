@@ -76,7 +76,7 @@ function CurrentPlayers({ onOpenConsoleWithCommand }: CurrentPlayersProps) {
               );
             }}
           >
-            {player.displayName} (Ping: {player.ping}ms, IP: {player.ip})
+            {player.displayName}
             <ContextMenu
               isOpen={activePlayerName === player.displayName}
               anchorElement={playerItemRefs.current[player.displayName] ?? null}
