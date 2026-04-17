@@ -2,12 +2,13 @@ import React, { useEffect, useRef, useState } from "react";
 import "./PlayersRegList.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faListDots, faSearch } from "@fortawesome/free-solid-svg-icons";
-import Container from "../layout/Container";
 import { Player } from "../types";
 import ContextMenu from "../components/ContextMenu";
 import PlayerRegForm from "./PlayerRegForm";
 import FloatingSection from "../layout/FloatingSection";
 import { usePlayerRegForm } from "../context/PlayerRegFormContext";
+import { useRustConsole } from "../context/RustConsoleContext";
+import { CommandsParser } from "../services/commands-parser";
 
 type CreatePlayerPayload = {
   steamid: string;
@@ -16,12 +17,14 @@ type CreatePlayerPayload = {
 };
 
 type PlayerVisibilityFilter = "all" | "subscribed" | "unsubscribed";
+type PlayerConnectionFilter = "all" | "connected" | "disconnected";
 
 type PlayersRegList = {
   players: Player[];
   selectedPlayerId?: number | null;
   loading: boolean;
   onSelectPlayer?: (player: Player) => void;
+  onViewDetails?: (player: Player, isConnected: boolean) => void;
   onCreatePlayer: (payload: CreatePlayerPayload) => Promise<boolean>;
   onDeletePlayer: (playerId: number) => Promise<void>;
   onUpdatePlayerTag: (playerId: number, nextTag: string) => Promise<void>;
@@ -32,6 +35,7 @@ function PlayersRegList({
   selectedPlayerId,
   loading,
   onSelectPlayer,
+  onViewDetails,
   onCreatePlayer,
   onDeletePlayer,
   onUpdatePlayerTag,
@@ -40,6 +44,12 @@ function PlayersRegList({
   const [playerFilter, setPlayerFilter] = useState("");
   const [visibilityFilter, setVisibilityFilter] =
     useState<PlayerVisibilityFilter>("all");
+  const [connectionFilter, setConnectionFilter] =
+    useState<PlayerConnectionFilter>("all");
+  const [connectedSteamIds, setConnectedSteamIds] = useState<Set<string>>(
+    new Set(),
+  );
+  const { executeCommand } = useRustConsole();
   const {
     isOpen: isRegFormOpen,
     draft,
@@ -64,8 +74,38 @@ function PlayersRegList({
       (visibilityFilter === "subscribed" && isSubscribed) ||
       (visibilityFilter === "unsubscribed" && !isSubscribed);
 
-    return matchesText && matchesVisibility;
+    const isConnected = connectedSteamIds.has(player.steamid);
+    const matchesConnection =
+      connectionFilter === "all" ||
+      (connectionFilter === "connected" && isConnected) ||
+      (connectionFilter === "disconnected" && !isConnected);
+
+    return matchesText && matchesVisibility && matchesConnection;
   });
+
+  async function refreshConnectedPlayers() {
+    try {
+      const response = await executeCommand("playerlist");
+      const output = response.response?.message ?? "[]";
+      const parsedPlayers = CommandsParser.parsePlayersList(output);
+      setConnectedSteamIds(
+        new Set(parsedPlayers.map((player) => player.steamId)),
+      );
+    } catch (error) {
+      console.error("Error obteniendo estado de conexion:", error);
+    }
+  }
+
+  useEffect(() => {
+    void refreshConnectedPlayers();
+    const intervalId = window.setInterval(() => {
+      void refreshConnectedPlayers();
+    }, 5000);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, [executeCommand]);
 
   useEffect(() => {
     if (!playerListRef.current || selectedPlayerId === null) {
@@ -134,138 +174,179 @@ function PlayersRegList({
 
   return (
     <section className="registered-players-section">
-      <Container>
-        <h2>Jugadores registrados</h2>
-        <ul
-          ref={playerListRef}
-          tabIndex={0}
-          onKeyDown={handlePlayerListKeyDown}
-          aria-label="Lista de jugadores registrados"
-        >
-          {filteredPlayers.length > 0 ? (
-            filteredPlayers.map((player) => (
-              <li
-                key={player.id}
-                data-player-id={player.id}
-                className={
-                  selectedPlayerId === player.id
-                    ? "player-item selected"
-                    : "player-item"
-                }
-                onClick={() => {
-                  onSelectPlayer?.(player);
-                  playerListRef.current?.focus();
-                }}
-              >
-                <div>
-                  <span>{player.tag}</span>
-                  <span>{player.steamid}</span>
-                </div>
+      <h2>Jugadores registrados</h2>
+      <ul
+        ref={playerListRef}
+        tabIndex={0}
+        onKeyDown={handlePlayerListKeyDown}
+        aria-label="Lista de jugadores registrados"
+      >
+        {filteredPlayers.length > 0 ? (
+          filteredPlayers.map((player) => (
+            <li
+              key={player.id}
+              data-player-id={player.id}
+              className={
+                selectedPlayerId === player.id
+                  ? "player-item selected"
+                  : "player-item"
+              }
+              onClick={() => {
+                onSelectPlayer?.(player);
+                playerListRef.current?.focus();
+              }}
+            >
+              <div>
+                <span>{player.tag}</span>
+                <span>{player.steamid}</span>
+                <span
+                  className={
+                    connectedSteamIds.has(player.steamid)
+                      ? "player-connection-status connected"
+                      : "player-connection-status disconnected"
+                  }
+                >
+                  {connectedSteamIds.has(player.steamid)
+                    ? "Conectado"
+                    : "Desconectado"}
+                </span>
+              </div>
 
-                <div className="player-actions">
-                  <button
-                    ref={(element) => {
-                      playerMenuButtonRefs.current[player.id] = element;
-                    }}
-                    type="button"
-                    className="player-menu-button"
-                    onClick={() => {
-                      setActivePlayerId((prev) =>
-                        prev === player.id ? null : player.id,
-                      );
-                    }}
-                    aria-haspopup="menu"
-                    aria-label={`Abrir menu del jugador ${player.tag}`}
-                    disabled={loading}
-                  >
-                    <FontAwesomeIcon icon={faListDots} />
-                  </button>
+              <div className="player-actions">
+                <button
+                  ref={(element) => {
+                    playerMenuButtonRefs.current[player.id] = element;
+                  }}
+                  type="button"
+                  className="player-menu-button"
+                  onClick={() => {
+                    setActivePlayerId((prev) =>
+                      prev === player.id ? null : player.id,
+                    );
+                  }}
+                  aria-haspopup="menu"
+                  aria-label={`Abrir menu del jugador ${player.tag}`}
+                  disabled={loading}
+                >
+                  <FontAwesomeIcon icon={faListDots} />
+                </button>
 
-                  <ContextMenu
-                    isOpen={activePlayerId === player.id}
-                    anchorElement={
-                      playerMenuButtonRefs.current[player.id] ?? null
-                    }
-                    onClose={() => setActivePlayerId(null)}
-                    options={[
-                      {
-                        label: "Cambiar tag",
-                        onClick: () => {
-                          void handleChangeTag(player);
-                        },
+                <ContextMenu
+                  isOpen={activePlayerId === player.id}
+                  anchorElement={
+                    playerMenuButtonRefs.current[player.id] ?? null
+                  }
+                  onClose={() => setActivePlayerId(null)}
+                  options={[
+                    {
+                      label: "Ver detalles",
+                      onClick: () => {
+                        onViewDetails?.(
+                          player,
+                          connectedSteamIds.has(player.steamid),
+                        );
                       },
-                      {
-                        label: "Borrar jugador",
-                        onClick: () => {
-                          void onDeletePlayer(player.id);
-                        },
+                    },
+                    {
+                      label: "Cambiar tag",
+                      onClick: () => {
+                        void handleChangeTag(player);
                       },
-                    ]}
-                  />
-                </div>
-              </li>
-            ))
-          ) : (
-            <li>
-              <span>No se encuentran jugadores</span>
+                    },
+                    {
+                      label: "Borrar jugador",
+                      onClick: () => {
+                        void onDeletePlayer(player.id);
+                      },
+                    },
+                  ]}
+                />
+              </div>
             </li>
-          )}
-        </ul>
-        <div className="player-filters">
-          <div className="field-group player-filter-field">
-            <FontAwesomeIcon icon={faSearch} />
-            <input
-              id="player-filter"
-              type="text"
-              value={playerFilter}
-              onChange={(e) => setPlayerFilter(e.target.value)}
-              placeholder="Filtrar por tag o steamid"
-              className="text-input"
-            />
-          </div>
-          <div className="player-filter-field">
-            <button
-              type="button"
-              className={`player-filter-button ${visibilityFilter === "all" ? "active" : ""}`}
-              onClick={() => setVisibilityFilter("all")}
-            >
-              Todos
-            </button>
-            <button
-              type="button"
-              className={`player-filter-button ${visibilityFilter === "subscribed" ? "active" : ""}`}
-              onClick={() => setVisibilityFilter("subscribed")}
-            >
-              Suscritos
-            </button>
-            <button
-              type="button"
-              className={`player-filter-button ${visibilityFilter === "unsubscribed" ? "active" : ""}`}
-              onClick={() => setVisibilityFilter("unsubscribed")}
-            >
-              No suscritos
-            </button>
-          </div>
-        </div>
-
-        <button
-          type="button"
-          className="open-player-reg-form-button"
-          onClick={() => openPlayerRegForm()}
-          disabled={loading}
-        >
-          Registrar jugador
-        </button>
-
-        {isRegFormOpen && (
-          <FloatingSection onBackgroundClick={() => closePlayerRegForm()}>
-            <PlayerRegForm
-              onSubmit={handleCreatePlayer}
-              initialValues={draft ?? undefined}
-            />
-          </FloatingSection>
+          ))
+        ) : (
+          <li>
+            <span>No se encuentran jugadores</span>
+          </li>
         )}
-      </Container>
+      </ul>
+      <div className="player-filters">
+        <div className="field-group player-filter-field">
+          <FontAwesomeIcon icon={faSearch} />
+          <input
+            id="player-filter"
+            type="text"
+            value={playerFilter}
+            onChange={(e) => setPlayerFilter(e.target.value)}
+            placeholder="Filtrar por tag o steamid"
+            className="text-input"
+          />
+        </div>
+        <div className="player-filter-field">
+          <button
+            type="button"
+            className={`player-filter-button ${visibilityFilter === "all" ? "active" : ""}`}
+            onClick={() => setVisibilityFilter("all")}
+          >
+            Todos
+          </button>
+          <button
+            type="button"
+            className={`player-filter-button ${visibilityFilter === "subscribed" ? "active" : ""}`}
+            onClick={() => setVisibilityFilter("subscribed")}
+          >
+            Suscritos
+          </button>
+          <button
+            type="button"
+            className={`player-filter-button ${visibilityFilter === "unsubscribed" ? "active" : ""}`}
+            onClick={() => setVisibilityFilter("unsubscribed")}
+          >
+            No suscritos
+          </button>
+        </div>
+        <div className="player-filter-field">
+          <button
+            type="button"
+            className={`player-filter-button ${connectionFilter === "all" ? "active" : ""}`}
+            onClick={() => setConnectionFilter("all")}
+          >
+            Todos
+          </button>
+          <button
+            type="button"
+            className={`player-filter-button ${connectionFilter === "connected" ? "active" : ""}`}
+            onClick={() => setConnectionFilter("connected")}
+          >
+            Conectados
+          </button>
+          <button
+            type="button"
+            className={`player-filter-button ${connectionFilter === "disconnected" ? "active" : ""}`}
+            onClick={() => setConnectionFilter("disconnected")}
+          >
+            Desconectados
+          </button>
+        </div>
+      </div>
+
+      <button
+        type="button"
+        className="open-player-reg-form-button"
+        onClick={() => openPlayerRegForm()}
+        disabled={loading}
+      >
+        Registrar jugador
+      </button>
+
+      {isRegFormOpen && (
+        <FloatingSection onBackgroundClick={() => closePlayerRegForm()}>
+          <PlayerRegForm
+            onSubmit={handleCreatePlayer}
+            initialValues={draft ?? undefined}
+          />
+        </FloatingSection>
+      )}
     </section>
   );
 }

@@ -44,3 +44,38 @@ export const getSteamProfile = async (steamId: string): Promise<SteamProfileResp
 
     return await response.json() as SteamProfileResponse
 }
+
+type PlayerNote = {
+    id: number;
+    content: string;
+    createdAt: string;
+    playerId: number;
+};
+
+export const getPlayerNotes = async (playerId: number): Promise<PlayerNote[]> => {
+    const response = await fetch(`/api/players/${playerId}/notes`)
+
+    if (!response.ok) {
+        const data = await response.json().catch(() => null)
+        throw new Error(data?.error ?? `HTTP error! status: ${response.status}`)
+    }
+
+    return await response.json() as PlayerNote[]
+}
+
+export const createPlayerNote = async (playerId: number, content: string): Promise<PlayerNote> => {
+    const response = await fetch(`/api/players/${playerId}/notes`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ content }),
+    })
+
+    if (!response.ok) {
+        const data = await response.json().catch(() => null)
+        throw new Error(data?.error ?? `HTTP error! status: ${response.status}`)
+    }
+
+    return await response.json() as PlayerNote
+}

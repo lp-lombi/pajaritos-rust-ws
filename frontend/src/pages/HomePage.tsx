@@ -3,9 +3,10 @@ import { Player } from "../types";
 import "./HomePage.css";
 import PlayersRegList from "../sections/PlayersRegList";
 import Chat from "../sections/Chat";
-import PlayerDetails from "../sections/PlayerDetails";
 import CurrentPlayers from "../sections/CurrentPlayers";
 import { PlayerRegFormProvider } from "../context/PlayerRegFormContext";
+import FloatingSection from "../layout/FloatingSection";
+import CurrentPlayerDetails from "../sections/CurrentPlayerDetails";
 
 type CreatePlayerPayload = {
   steamid: string;
@@ -42,6 +43,9 @@ function HomePage({
   onOpenConsoleWithCommand,
 }: HomePageProps) {
   const [selectedPlayerId, setSelectedPlayerId] = useState<number | null>(null);
+  const [detailsPlayerId, setDetailsPlayerId] = useState<number | null>(null);
+  const [detailsPlayerConnected, setDetailsPlayerConnected] =
+    useState<boolean>(false);
 
   useEffect(() => {
     if (players.length === 0) {
@@ -56,10 +60,29 @@ function HomePage({
     );
   }, [players]);
 
-  const selectedPlayer = useMemo(
-    () => players.find((player) => player.id === selectedPlayerId) ?? null,
-    [players, selectedPlayerId],
+  const detailsPlayer = useMemo(
+    () => players.find((player) => player.id === detailsPlayerId) ?? null,
+    [players, detailsPlayerId],
   );
+
+  async function handleLoadSubscription(
+    player: Player,
+    validFrom: string,
+    validUntil: string,
+  ) {
+    await onUpdatePlayerDetails(player.id, {
+      subscription: {
+        validFrom: `${validFrom}T00:00:00.000Z`,
+        validUntil: `${validUntil}T23:59:59.999Z`,
+      },
+    });
+  }
+
+  async function handleRevokeSubscription(player: Player) {
+    await onUpdatePlayerDetails(player.id, {
+      subscription: null,
+    });
+  }
 
   return (
     <PlayerRegFormProvider>
@@ -70,24 +93,33 @@ function HomePage({
             selectedPlayerId={selectedPlayerId}
             loading={loading}
             onSelectPlayer={(player) => setSelectedPlayerId(player.id)}
+            onViewDetails={(player, isConnected) => {
+              setDetailsPlayerId(player.id);
+              setDetailsPlayerConnected(isConnected);
+            }}
             onCreatePlayer={onCreatePlayer}
             onDeletePlayer={onDeletePlayer}
             onUpdatePlayerTag={onUpdatePlayerTag}
           />
-          {selectedPlayer && (
-            <PlayerDetails
-              player={selectedPlayer}
-              loading={loading}
-              onClose={() => setSelectedPlayerId(null)}
-              onUpdatePlayerDetails={onUpdatePlayerDetails}
-            />
-          )}
         </div>
 
         <div className="home-page-right-column">
           <CurrentPlayers onOpenConsoleWithCommand={onOpenConsoleWithCommand} />
           <Chat />
         </div>
+
+        {detailsPlayer && (
+          <FloatingSection onBackgroundClick={() => setDetailsPlayerId(null)}>
+            <CurrentPlayerDetails
+              player={detailsPlayer}
+              variant="registered"
+              isConnected={detailsPlayerConnected}
+              onLoadSubscription={handleLoadSubscription}
+              onRevokeSubscription={handleRevokeSubscription}
+              loading={loading}
+            />
+          </FloatingSection>
+        )}
       </div>
     </PlayerRegFormProvider>
   );

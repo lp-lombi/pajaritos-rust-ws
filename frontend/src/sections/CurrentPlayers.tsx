@@ -61,7 +61,7 @@ function CurrentPlayers({ onOpenConsoleWithCommand }: CurrentPlayersProps) {
 
   return (
     <section className="current-players">
-      <h2>Jugadores ({players.length})</h2>
+      <h2>Jugadores en el servidor ({players.length})</h2>
       <ul>
         {players.map((player, index) => (
           <li
@@ -83,14 +83,14 @@ function CurrentPlayers({ onOpenConsoleWithCommand }: CurrentPlayersProps) {
               onClose={() => setActivePlayerName(null)}
               options={[
                 {
-                  label: `Detalles`,
+                  label: "Detalles",
                   onClick: () => {
                     setSelectedPlayer(player);
                     setActivePlayerName(null);
                   },
                 },
                 {
-                  label: `Combatlog`,
+                  label: "Combatlog",
                   onClick: () => {
                     handleOpenCombatlog(player.displayName);
                   },

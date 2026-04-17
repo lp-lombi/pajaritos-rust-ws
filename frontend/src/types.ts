@@ -14,6 +14,13 @@ export type Player = {
   subscription?: Subscription;
 };
 
+export type Note = {
+  id: number;
+  content: string;
+  createdAt: string;
+  playerId: number;
+};
+
 export type Subscription = {
   id: number;
   validFrom: string;

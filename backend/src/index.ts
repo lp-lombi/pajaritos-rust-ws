@@ -7,6 +7,7 @@ import { User } from './entities/User';
 import { Player } from './entities/Player';
 import { Role } from './entities/Role';
 import { Subscription } from './entities/Subscription';
+import { Note } from './entities/Note';
 import { comparePasswords } from './utils/passwordUtils';
 import { hashPassword } from './utils/passwordUtils';
 import { RustRcon } from './utils/rustRcon';
@@ -307,6 +308,70 @@ AppDataSource.initialize()
       } catch (error) {
         console.error('Error al obtener players:', error);
         res.status(500).json({ error: 'Error en el servidor' });
+      }
+    });
+
+    app.get('/api/players/:id/notes', async (req, res) => {
+      try {
+        const playerId = Number(req.params.id);
+
+        if (!Number.isInteger(playerId) || playerId <= 0) {
+          return res.status(400).json({ error: 'Id de player invalido' });
+        }
+
+        const playerRepository = AppDataSource.getRepository(Player);
+        const noteRepository = AppDataSource.getRepository(Note);
+
+        const player = await playerRepository.findOne({ where: { id: playerId } });
+
+        if (!player) {
+          return res.status(404).json({ error: 'Player no encontrado' });
+        }
+
+        const notes = await noteRepository.find({
+          where: { playerId },
+          order: { createdAt: 'DESC' },
+        });
+
+        return res.json(notes);
+      } catch (error) {
+        console.error('Error al obtener notas del player:', error);
+        return res.status(500).json({ error: 'Error en el servidor' });
+      }
+    });
+
+    app.post('/api/players/:id/notes', async (req, res) => {
+      try {
+        const playerId = Number(req.params.id);
+        const content = typeof req.body?.content === 'string' ? req.body.content.trim() : '';
+
+        if (!Number.isInteger(playerId) || playerId <= 0) {
+          return res.status(400).json({ error: 'Id de player invalido' });
+        }
+
+        if (!content) {
+          return res.status(400).json({ error: 'La nota no puede estar vacia' });
+        }
+
+        const playerRepository = AppDataSource.getRepository(Player);
+        const noteRepository = AppDataSource.getRepository(Note);
+
+        const player = await playerRepository.findOne({ where: { id: playerId } });
+
+        if (!player) {
+          return res.status(404).json({ error: 'Player no encontrado' });
+        }
+
+        const note = noteRepository.create({
+          content,
+          playerId,
+        });
+
+        const savedNote = await noteRepository.save(note);
+        return res.status(201).json(savedNote);
+      } catch (error) {
+        console.error('Error al crear nota del player:', error);
+        return res.status(500).json({ error: 'Error en el servidor' });
       }
     });
 
