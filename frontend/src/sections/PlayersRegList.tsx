@@ -196,20 +196,19 @@ function PlayersRegList({
                 playerListRef.current?.focus();
               }}
             >
-              <div>
-                <span>{player.tag}</span>
-                <span>{player.steamid}</span>
-                <span
-                  className={
-                    connectedSteamIds.has(player.steamid)
-                      ? "player-connection-status connected"
-                      : "player-connection-status disconnected"
-                  }
-                >
-                  {connectedSteamIds.has(player.steamid)
-                    ? "Conectado"
-                    : "Desconectado"}
-                </span>
+              <div className="player-main-info">
+                <div className="player-tag-row">
+                  <span
+                    className={
+                      connectedSteamIds.has(player.steamid)
+                        ? "player-connection-dot connected"
+                        : "player-connection-dot disconnected"
+                    }
+                    aria-hidden="true"
+                  />
+                  <span>{player.tag}</span>
+                </div>
+                <span className="player-steamid">{player.steamid}</span>
               </div>
 
               <div className="player-actions">

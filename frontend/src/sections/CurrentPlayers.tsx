@@ -1,5 +1,7 @@
 import React, { useEffect } from "react";
 import ContextMenu from "../components/ContextMenu";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faListDots } from "@fortawesome/free-solid-svg-icons";
 
 import "./CurrentPlayers.css";
 import { useRustConsole } from "../context/RustConsoleContext";
@@ -70,13 +72,21 @@ function CurrentPlayers({ onOpenConsoleWithCommand }: CurrentPlayersProps) {
               playerItemRefs.current[player.displayName] = element;
             }}
             className="current-player-item"
-            onClick={() => {
-              setActivePlayerName((prev) =>
-                prev === player.displayName ? null : player.displayName,
-              );
-            }}
           >
-            {player.displayName}
+            <span>{player.displayName}</span>
+            <button
+              type="button"
+              className="current-player-menu-button"
+              onClick={() => {
+                setActivePlayerName((prev) =>
+                  prev === player.displayName ? null : player.displayName,
+                );
+              }}
+              aria-haspopup="menu"
+              aria-label={`Abrir menu del jugador ${player.displayName}`}
+            >
+              <FontAwesomeIcon icon={faListDots} />
+            </button>
             <ContextMenu
               isOpen={activePlayerName === player.displayName}
               anchorElement={playerItemRefs.current[player.displayName] ?? null}

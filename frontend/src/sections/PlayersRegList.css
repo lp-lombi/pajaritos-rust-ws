@@ -8,45 +8,45 @@
   outline-offset: 2px;
 }
 
-.player-item {
-  cursor: pointer;
-}
-
-.player-item.selected {
-  outline: 1px solid var(--primary-color) !important;
-  z-index: 1;
-}
-
 .registered-players-section li:hover {
   background-color: var(--primary-color);
 }
 
-.registered-players-section li span:nth-child(2n) {
+.player-steamid {
   font-size: 0.75rem;
   color: var(--text-color-secondary);
 }
 
-.player-connection-status {
-  width: fit-content;
-  font-size: 0.72rem !important;
-  color: inherit !important;
-  padding: 0.15rem 0.45rem;
-  border-radius: 999px;
+.player-item.selected {
+  box-shadow: inset 0 0 0 1px var(--primary-color);
 }
 
-.player-connection-status.connected {
-  background: rgba(75, 181, 67, 0.2);
-  color: #6ee56a !important;
-}
-
-.player-connection-status.disconnected {
-  background: rgba(201, 86, 86, 0.2);
-  color: #ff8f8f !important;
-}
-
-.registered-players-section li > div:first-child {
+.player-main-info {
   display: flex;
   flex-direction: column;
+  gap: 0.1rem;
+}
+
+.player-tag-row {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.player-connection-dot {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+}
+
+.player-connection-dot.connected {
+  background: #6ee56a;
+  box-shadow: 0 0 0 4px rgba(110, 229, 106, 0.2);
+}
+
+.player-connection-dot.disconnected {
+  background: #ff8f8f;
+  box-shadow: 0 0 0 4px rgba(255, 143, 143, 0.2);
 }
 
 .registered-players-section li button {

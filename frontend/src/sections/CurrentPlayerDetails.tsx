@@ -251,7 +251,15 @@ function CurrentPlayerDetails({
             }}
           />
         </div>
-        <h3>{playerName}</h3>
+        <div className="current-player-name-row">
+          <span
+            className={`current-player-status-dot ${
+              isCurrentPlayer || isConnected ? "connected" : "disconnected"
+            }`}
+            aria-hidden="true"
+          />
+          <h3>{playerName}</h3>
+        </div>
         <div className="current-player-details-field">
           <strong>SteamID:</strong>
           <span>{steamId}</span>
@@ -259,10 +267,6 @@ function CurrentPlayerDetails({
 
         {isCurrentPlayer ? (
           <>
-            <div className="current-player-details-field">
-              <strong>Estado:</strong>
-              <span>Conectado</span>
-            </div>
             <div className="current-player-details-field">
               <strong>Ping:</strong>
               <span>{(player as RustPlayer).ping} ms</span>
@@ -312,10 +316,6 @@ function CurrentPlayerDetails({
           </>
         ) : (
           <>
-            <div className="current-player-details-field">
-              <strong>Estado:</strong>
-              <span>{isConnected ? "Conectado" : "Desconectado"}</span>
-            </div>
             <div className="current-player-details-field">
               <strong>Suscripción:</strong>
               <span>

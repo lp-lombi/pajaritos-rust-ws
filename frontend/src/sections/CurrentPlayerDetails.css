@@ -14,7 +14,31 @@
 }
 
 .current-player-details h3 {
-  text-align: center;
+  margin: 0;
+}
+
+.current-player-name-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  margin-bottom: 0.75rem;
+}
+
+.current-player-status-dot {
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 50%;
+}
+
+.current-player-status-dot.connected {
+  background: #6ee56a;
+  box-shadow: 0 0 0 4px rgba(110, 229, 106, 0.2);
+}
+
+.current-player-status-dot.disconnected {
+  background: #ff8f8f;
+  box-shadow: 0 0 0 4px rgba(255, 143, 143, 0.2);
 }
 
 .current-player-details-field {
