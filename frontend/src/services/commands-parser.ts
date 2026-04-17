@@ -17,8 +17,8 @@ export class CommandsParser {
     /**
      * Parsea la salida del comando "playerlist" y devuelve una lista de objetos Player.
      */
-    static parsePlayersList(output: string): Player[] {
-        const players: Player[] = [];
+    static parsePlayersList(output: string): RustPlayer[] {
+        const players: RustPlayer[] = [];
         const parsed = JSON.parse(output);
         if (Array.isArray(parsed)) {
             for (const p of parsed) {
